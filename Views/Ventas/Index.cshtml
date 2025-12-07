@@ -1,0 +1,62 @@
+﻿@model IEnumerable<SIJUPAY.Models.Venta>
+
+@{
+    ViewData["Title"] = "Historial de Ventas";
+}
+
+<div class="container my-5">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="text-success"> Historial de Ventas</h1>
+            <p>Listado de todas las ventas finalizadas y registradas como salida de inventario.</p>
+            <hr />
+
+            <div class="d-flex justify-content-end mb-4">
+                <a asp-action="Crear" class="btn btn-success">
+                    <i class="fas fa-plus"></i> Registrar Nueva Venta
+                </a>
+            </div>
+
+            @if (Model.Any())
+            {
+                <table class="table table-striped table-bordered table-hover">
+                    <thead class="bg-success text-white">
+                        <tr>
+                            <th>ID Venta</th>
+                            <th>Fecha</th>
+                            <th>Cliente</th>
+                            <th>Total Cobrado</th>
+                            <th>Método de Pago</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.IdVenta</td>
+                                <td>@(item.Fecha.HasValue? item.Fecha.Value.ToString("dd/MM/yyyy HH:mm") : "N/A")</td>
+                                <td>@item.IdClienteNavigation.Nombre @item.IdClienteNavigation.Apellido</td>
+                                <td>@item.Total.ToString("C")</td>
+                                <td>@item.MetodoPago</td>
+                                <td><span class="badge bg-success">@item.Observaciones</span></td>
+                                <td>
+                                    <a asp-action="DetalleFactura" asp-route-id="@item.IdVenta" class="btn btn-sm btn-info text-white">
+                                        <i class="fas fa-file-invoice"></i> Ver Factura
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="alert alert-warning" role="alert">
+                    No hay ventas finalizadas registradas en el historial.
+                </div>
+            }
+        </div>
+    </div>
+</div>

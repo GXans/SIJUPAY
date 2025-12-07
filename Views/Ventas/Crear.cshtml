@@ -1,0 +1,130 @@
+﻿@model SIJUPAY.Models.ViewModels.VentaViewModel
+
+@{
+    ViewData["Title"] = "Crear Nueva Venta (Catálogo)";
+}
+
+<div class="container my-4">
+    <div class="row">
+        <div class="col-12">
+            <h2> Catalogo de productos</h2>
+            <p class="text-muted">Seleccione las cantidades de los productos deseados y registre la venta en un solo paso.</p>
+        </div>
+    </div>
+
+    <hr />
+
+    @* Muestra mensajes de error o éxito si existen *@
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger" role="alert">
+            @TempData["Error"]
+        </div>
+    }
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success" role="alert">
+            @TempData["Success"]
+        </div>
+    }
+
+    <form asp-action="RegistrarVenta" method="post">
+
+        <div class="row mb-4 bg-light p-3 rounded shadow-sm border">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label asp-for="IdCliente">ID del Cliente:</label>
+                    <input asp-for="IdCliente" type="number" class="form-control" required />
+                    <span asp-validation-for="IdCliente" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label asp-for="MetodoPago">Método de Pago:</label>
+                    <select asp-for="MetodoPago" class="form-control" required>
+                        <option value="Efectivo">Efectivo</option>
+                        <option value="Tarjeta">Tarjeta</option>
+                        <option value="Transferencia">Transferencia</option>
+                    </select>
+                    <span asp-validation-for="MetodoPago" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+
+        <hr />
+
+        <h4>Catálogo de Productos Disponibles (@Model.ItemsCatalogo.Count() ítems)</h4>
+
+        <div class="row">
+            @for (int i = 0; i < Model.ItemsCatalogo.Count; i++)
+            {
+                var item = Model.ItemsCatalogo[i];
+
+                <input type="hidden" asp-for="ItemsCatalogo[i].IdProducto" />
+                <input type="hidden" asp-for="ItemsCatalogo[i].Nombre" />
+                <input type="hidden" asp-for="ItemsCatalogo[i].Precio" />
+                <input type="hidden" asp-for="ItemsCatalogo[i].Stock" />
+                <input type="hidden" asp-for="ItemsCatalogo[i].ImagenUrl" />
+
+                <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 mb-4">
+                    <div class="card h-100 shadow-sm border">
+
+                        @if (!string.IsNullOrEmpty(item.ImagenUrl))
+                        {
+                            <img src="data:image/jpeg;base64,@item.ImagenUrl"
+                                 class="card-img-top"
+                                 alt="@item.Nombre"
+                                 style="height: 180px; object-fit: cover;" />
+                        }
+                        else
+                        {
+                            <div class="text-center p-4 bg-light text-muted" style="height: 180px; display: flex; align-items: center; justify-content: center;">
+                                <span>[Sin Imagen Disponible]</span>
+                            </div>
+                        }
+
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title text-primary mb-1">@item.Nombre</h5>
+                            <p class="card-text text-muted small">
+                                Stock disponible: **@item.Stock** unid.
+                            </p>
+                            <h4 class="mt-auto mb-3 text-success">**$@item.Precio.ToString("N2")**</h4>
+
+                            <div class="form-group">
+                                <label asp-for="ItemsCatalogo[i].CantidadAComprar">Cantidad a Vender:</label>
+                                <input asp-for="ItemsCatalogo[i].CantidadAComprar"
+                                       type="number"
+                                       class="form-control text-center"
+                                       value="0"
+                                       min="0"
+                                       max="@item.Stock" />
+                                <span asp-validation-for="ItemsCatalogo[i].CantidadAComprar" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        @if (!Model.ItemsCatalogo.Any())
+        {
+            <div class="alert alert-info text-center">
+                No hay productos disponibles para la venta en este momento.
+            </div>
+        }
+
+        <div class="text-right mt-4 mb-5">
+            <button type="submit" class="btn btn-success btn-lg">
+                <i class="fas fa-cash-register"></i> Registrar y Finalizar Venta
+                
+            </button>
+            <a asp-action="Index" class="btn btn-secondary me-2">Ir al Historial de Ventas</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -1,0 +1,92 @@
+﻿@model SIJUPAY.Models.Producto
+
+@{
+    ViewData["Title"] = "Detalles del Producto";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="display-4">Detalles del Producto</h1>
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Volver a la Lista
+        </a>
+    </div>
+
+    <div class="card shadow-lg p-3 mb-5 bg-white rounded">
+        <div class="card-body">
+
+            <div class="row">
+
+                
+                <div class="col-md-4 text-center border-end p-4">
+                    <h5 class="card-title text-primary mb-3">Foto del Producto</h5>
+                    @if (Model.Foto != null && Model.Foto.Length > 0)
+                    {
+                        var base64 = Convert.ToBase64String(Model.Foto);
+                        var imgsrc = string.Format("data:image/gif;base64,{0}", base64);
+                        <img src="@imgsrc" style="max-height: 250px; max-width: 100%; object-fit: cover;" alt="@Model.Nombre" class="img-fluid rounded shadow" />
+                    }
+                    else
+                    {
+                        <div class="p-5 border rounded bg-light">
+                            <i class="fas fa-image fa-3x text-muted"></i>
+                            <p class="mt-2 text-muted">No hay foto disponible</p>
+                        </div>
+                    }
+                </div>
+
+                
+                <div class="col-md-8 p-4">
+                    <h2 class="mb-4">@Model.Nombre</h2>
+                    <hr />
+
+                    <dl class="row">
+
+                        <dt class="col-sm-3 text-muted">Categoría:</dt>
+                        <dd class="col-sm-9 fw-bold">
+                            @Html.DisplayFor(model => model.IdCategoriaNavigation.Nombre)
+                        </dd>
+
+                        <dt class="col-sm-3 text-muted">Precio:</dt>
+                        <dd class="col-sm-9 fs-5 text-success">
+                            @Html.DisplayFor(model => model.Precio, "C")
+                        </dd>
+
+                        <dt class="col-sm-3 text-muted">Stock Disponible:</dt>
+                        <dd class="col-sm-9">
+                            <span class="fs-5 @(Model.Stock <= 5 ? "text-danger" : "text-dark")">
+                                @Html.DisplayFor(model => model.Stock) unidades
+                            </span>
+                        </dd>
+
+                        <dt class="col-sm-3 text-muted">Estado:</dt>
+                        <dd class="col-sm-9">
+                            @if (Model.Estado.GetValueOrDefault())
+                            {
+                                <span class="badge bg-success">Activo</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">Inactivo/Agotado</span>
+                            }
+                        </dd>
+
+                        <dt class="col-sm-12 mt-3 text-muted">Descripción:</dt>
+                        <dd class="col-sm-12">
+                            <p class="border p-3 rounded bg-light">@Html.DisplayFor(model => model.Descripcion)</p>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+
+        </div>
+
+        
+        <div class="card-footer text-end">
+            <a asp-action="Index">Volver</a>
+        </div>
+    </div>
+</div>
+
+---
+
