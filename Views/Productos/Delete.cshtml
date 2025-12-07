@@ -1,0 +1,94 @@
+﻿@model SIJUPAY.Models.Producto
+
+@{
+    ViewData["Title"] = "Eliminar Producto";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="display-4 text-danger">Eliminar Producto</h1>
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Volver a la Lista
+        </a>
+    </div>
+
+    <div class="alert alert-danger shadow-sm" role="alert">
+        <h4 class="alert-heading">¿Estas seguro de eliminar este producto de forma permanente?</h4>
+        <p>
+            Estás a punto de eliminar el producto **@Model.Nombre** de forma permanente.
+            <br />
+            <strong>¿Estás completamente seguro de que deseas eliminar este producto?</strong> Esta acción no se puede deshacer.
+        </p>
+    </div>
+
+    <div class="card shadow-sm mt-4">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">Detalles del Producto a Eliminar</h5>
+        </div>
+        <div class="card-body">
+
+            <dl class="row">
+
+                
+                <dt class="col-sm-3 text-muted">@Html.DisplayNameFor(model => model.Nombre)</dt>
+                <dd class="col-sm-9 fw-bold">@Html.DisplayFor(model => model.Nombre)</dd>
+
+                <dt class="col-sm-3 text-muted">@Html.DisplayNameFor(model => model.Descripcion)</dt>
+                <dd class="col-sm-9">@Html.DisplayFor(model => model.Descripcion)</dd>
+
+                <hr class="my-3" />
+
+                
+                <dt class="col-sm-3 text-muted">@Html.DisplayNameFor(model => model.Precio)</dt>
+                <dd class="col-sm-3 text-success">
+                    
+                    @Html.DisplayFor(model => model.Precio, "C")
+                </dd>
+
+                <dt class="col-sm-3 text-muted">@Html.DisplayNameFor(model => model.Stock)</dt>
+                <dd class="col-sm-3">@Html.DisplayFor(model => model.Stock)</dd>
+
+                
+                <dt class="col-sm-3 text-muted">@Html.DisplayNameFor(model => model.Estado)</dt>
+                <dd class="col-sm-3">
+                    
+                    @(Model.Estado.GetValueOrDefault() ? "Activo" : "Inactivo")
+                </dd>
+
+                <dt class="col-sm-3 text-muted">Categoría</dt>
+                <dd class="col-sm-3">
+                    
+                    @Html.DisplayFor(model => model.IdCategoriaNavigation.Nombre)
+                </dd>
+
+                <hr class="my-3" />
+
+                
+                <dt class="col-sm-12 text-center mt-3">@Html.DisplayNameFor(model => model.Foto)</dt>
+                <dd class="col-sm-12 text-center">
+                    
+                    @if (Model.Foto != null && Model.Foto.Length > 0)
+                    {
+                        var base64 = Convert.ToBase64String(Model.Foto);
+                        var imgsrc = string.Format("data:image/gif;base64,{0}", base64);
+                        <img src="@imgsrc" style="max-height: 150px; max-width: 150px;" alt="@Model.Nombre" class="img-thumbnail rounded" />
+                    }
+                    else
+                    {
+                        <span>(Sin Foto)</span>
+                    }
+                </dd>
+            </dl>
+
+        </div>
+
+        <div class="card-footer text-end">
+            <form asp-action="Delete">
+                <input type="hidden" asp-for="IdProducto" />
+                <button type="submit" class="btn btn-danger btn-lg">
+                    <i class="fas fa-trash-alt"></i> Confirmar Eliminación
+                </button>
+            </form>
+        </div>
+    </div>
+</div>

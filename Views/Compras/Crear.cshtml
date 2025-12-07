@@ -1,0 +1,57 @@
+﻿@model IEnumerable<SIJUPAY.Models.Producto>
+
+@{
+    ViewData["Title"] = "Catálogo de Compras";
+}
+
+<h1 class="mb-4 text-primary" style="text-align:center"> Catálogo de Productos</h1>
+
+<div class="d-flex justify-content-end mb-4">
+    <a asp-action="Index" class="btn btn-secondary btn-sm shadow-sm me-3">
+        <i class="fas fa-list-alt"></i> Consultar Historial de Pago
+    </a>
+    <a asp-action="PagarCarrito" class="btn btn-success btn-sm shadow-sm">
+        <i class="fas fa-shopping-cart"></i> Ir al Carrito
+    </a>
+</div>
+
+<div class="row row-cols-1 row-cols-md-3 g-4">
+    @foreach (var item in Model)
+    {
+        <div class="col">
+            <div class="card h-100 shadow-sm border-secondary">
+
+                
+                @if (item.Foto != null && item.Foto.Length > 0)
+                {
+                    var base64 = Convert.ToBase64String(item.Foto);
+                    var imgsrc = $"data:image/png;base64,{base64}";
+                    <img src="@imgsrc" class="card-img-top" style="height: 180px; object-fit: cover;" />
+                }
+                else
+                {
+                    <div class="d-flex align-items-center justify-content-center bg-light" style="height: 180px;">
+                        <span class="text-muted">Sin Foto</span>
+                    </div>
+                }
+
+                <div class="card-body">
+                    <h5 class="card-title">@item.Nombre</h5>
+                    <p class="card-text small">
+                        <strong>Stock Actual:</strong> @item.Stock
+                    </p>
+
+                    <form asp-action="AgregarAlCarrito" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="idProducto" value="@item.IdProducto" />
+
+                        <button type="submit" class="btn btn-primary w-100 mt-2">
+                            <i class="fas fa-plus"></i> Agregar al Carrito
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    }
+</div>

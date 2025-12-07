@@ -1,0 +1,114 @@
+﻿@model SIJUPAY.Models.ViewModels.CompraViewModel
+
+
+@{
+    ViewData["Title"] = "Finalizar Compra Pendiente";
+    
+    int idCompraPendiente = 0;
+    if (ViewBag.IdCompraPendiente != null)
+    {
+        idCompraPendiente = (int)ViewBag.IdCompraPendiente;
+    }
+
+    decimal subtotal = 0;
+}
+
+<div class="container my-4" >
+    <h2 style="text-align:center">Carrito de compras</h2>
+    <p class="text-muted" style="text-align:center">Revise los productos a recibir y seleccione el método de pago para finalizar el proceso.</p>
+    <hr />
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger" role="alert">
+            @TempData["Error"]
+        </div>
+    }
+
+    @if (!Model.Detalles.Any())
+    {
+        <div class="alert alert-info text-center">
+            El carrito de compras está vacío. Regrese al catálogo para agregar productos.
+        </div>
+        <a asp-action="Crear" class="btn btn-secondary">Volver al Catálogo</a>
+    }
+    else
+    {
+        <form asp-action="FinalizarCompra" method="post">
+            <input type="hidden" name="idCompra" value="@idCompraPendiente" />
+            <input type="hidden" asp-for="IdProveedor" />
+
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">Detalles de la compra</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th class="text-center">Cantidad</th>
+                                        <th class="text-right">Costo Unitario</th>
+                                        <th class="text-right">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model.Detalles)
+                                    {
+                                        decimal totalItem = item.Cantidad * item.PrecioCompra;
+                                        subtotal += totalItem;
+
+                                        <tr>
+                                            <td>@item.NombreProducto</td>
+                                            <td class="text-center">@item.Cantidad</td>
+                                            <td class="text-right">$@item.PrecioCompra.ToString("N2")</td>
+                                            <td class="text-right">$@totalItem.ToString("N2")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card shadow-lg sticky-top" style="top: 20px;">
+                        <div class="card-body">
+                            <h4 class="card-title text-primary">Resumen de pago</h4>
+                            <hr />
+
+                            <div class="d-flex justify-content-between font-weight-bold h5">
+                                <span>TOTAL A PAGAR:</span>
+                                <span class="text-danger">$@subtotal.ToString("N2")</span>
+                            </div>
+
+                            <hr />
+
+                            <div class="form-group mb-4">
+                                <label for="metodoDePago" class="font-weight-bold">Método de Pago:</label>
+                                <select id="metodoDePago" name="metodoDePago" class="form-control" required>
+                                    <option value="">-- Seleccionar --</option>
+                                    <option value="Efectivo">Efectivo</option>
+                                    <option value="Transferencia">Transferencia</option>
+                                    <option value="Credito">Crédito (A plazos)</option>
+                                </select>
+                            </div>
+
+                            <button type="submit" class="btn btn-danger btn-lg btn-block">
+                                <i class="fas fa-handshake"></i> FINALIZAR COMPRA
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    }
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
