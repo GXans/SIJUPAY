@@ -1,34 +1,23 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using SIJUPAY.Logica;
 using SIJUPAY.Models;
-using System.Diagnostics;
+using System.Security.Claims;
 
 namespace SIJUPAY.Controllers
 {
     [Authorize]
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
-
-        public HomeController(ILogger<HomeController> logger)
-        {
-            _logger = logger;
-        }
-
         public IActionResult Index()
         {
-            return View();
-        }
+            Logica_Usuarios logicaUsuario = new Logica_Usuarios();
 
-        public IActionResult Privacy()
-        {
-            return View();
-        }
+            string telefonoUsuario = HttpContext.User.Claims.FirstOrDefault(c => c.Type == "Telefono")?.Value;
 
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            Usuario usuarioLogueado = logicaUsuario.obtenerUsuarioPorTelefono(telefonoUsuario);
+
+            return View(usuarioLogueado);
         }
     }
 }

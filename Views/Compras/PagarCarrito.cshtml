@@ -1,125 +1,120 @@
 ﻿@model SIJUPAY.Models.ViewModels.CompraViewModel
-@using SIJUPAY.Models.ViewModels;
-
 
 @{
     ViewData["Title"] = "Finalizar Compra Pendiente";
-    
-    int idCompraPendiente = 0;
-    if (ViewBag.IdCompraPendiente != null)
-    {
-        idCompraPendiente = (int)ViewBag.IdCompraPendiente;
-    }
 
+    int idCompraPendiente = ViewBag.IdCompraPendiente != null ? (int)ViewBag.IdCompraPendiente : 0;
     decimal subtotal = 0;
 }
 
-<div class="container my-4" >
-    <h2 style="text-align:center">Carrito de compras</h2>
-    <p class="text-muted" style="text-align:center">Revise los productos a recibir y seleccione el método de pago para finalizar el proceso.</p>
-    <hr />
+<div class="main-content-card factura-card" style="padding: 35px;">
+
+    <div class="factura-header" style="margin-bottom: 35px;">
+        <h1 class="neon-title-factura" style="margin-bottom: 10px;">
+            CARRITO DE COMPRA
+            <span class="factura-id">Compra Pendiente</span>
+        </h1>
+        <p class="text-center text-muted" style="font-size: 1.1rem; margin-bottom: 10px;">
+            Revise los productos y seleccione un método de pago para finalizar.
+        </p>
+        <hr class="neon-divider" />
+    </div>
 
     @if (TempData["Error"] != null)
     {
-        <div class="alert alert-danger" role="alert">
+        <div class="alert alert-danger text-center my-3">
             @TempData["Error"]
         </div>
     }
 
     @if (!Model.Detalles.Any())
     {
-        <div class="alert alert-info text-center">
+        <div class="alert alert-info text-center my-4">
             El carrito de compras está vacío. Regrese al catálogo para agregar productos.
         </div>
-        <a asp-action="Crear" class="btn btn-secondary">Volver al Catálogo</a>
+
+        <div class="factura-footer" style="margin-top: 40px;">
+            <a asp-action="Crear" class="btn-primary-action">
+                <i class="fas fa-undo"></i> Volver al Catálogo
+            </a>
+        </div>
     }
     else
     {
-        <form asp-action="FinalizarCompra" method="post">
-        @Html.AntiForgeryToken()
-        
-        @if (idCompraPendiente != 0)
-        {
+        <form asp-action="FinalizarCompra" method="post" style="margin-top: 25px;">
             <input type="hidden" name="idCompra" value="@idCompraPendiente" />
             <input type="hidden" asp-for="IdProveedor" />
 
-            <div class="row">
-                <div class="col-lg-8">
-                    <div class="card shadow-sm mb-4">
-                        <div class="card-header bg-primary text-white">
-                            <h5 class="mb-0">Detalles de la compra</h5>
-                        </div>
-                        <div class="card-body">
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>Producto</th>
-                                        <th class="text-center">Cantidad</th>
-                                        <th class="text-right">Costo Unitario</th>
-                                        <th class="text-right">Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var item in Model.Detalles)
-                                    {
-                                        decimal totalItem = item.Cantidad * item.PrecioCompra;
-                                        subtotal += totalItem;
+            <div class="data-section" style="gap: 40px; display: flex; flex-direction: column;">
 
-                                        <tr>
-                                            <td>@item.NombreProducto</td>
-                                            <td class="text-center">@item.Cantidad</td>
-                                            <td class="text-right">$@item.PrecioCompra.ToString("N2")</td>
-                                            <td class="text-right">$@totalItem.ToString("N2")</td>
-                                        </tr>
-                            
-                            <input type="hidden" name="Detalles[@index].IdProducto" value="@item.IdProducto" />
-                            
-                            { index++; }
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
+                <!-- Tabla de productos -->
+                <div class="data-group">
+                    <h5 class="group-title" style="margin-bottom: 20px;">Productos en el Carrito</h5>
+
+                    <table class="futuristic-table" style="margin-bottom: 40px;">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th class="text-center">Cantidad</th>
+                                <th class="text-end">Costo Unitario</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.Detalles)
+                            {
+                                decimal totalItem = item.Cantidad * item.PrecioCompra;
+                                subtotal += totalItem;
+
+                                <tr>
+                                    <td>@item.NombreProducto</td>
+                                    <td class="text-center">@item.Cantidad</td>
+                                    <td class="text-end">$@item.PrecioCompra.ToString("N2")</td>
+                                    <td class="text-end total-row">$@totalItem.ToString("N2")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <hr class="neon-divider" style="margin: 10px 0 25px 0;" />
+
+                <!-- Total -->
+                <div class="total-summary" style="margin-bottom: 30px;">
+                    <div class="total-box" style="padding: 20px 25px;">
+                        <p class="total-label">TOTAL A PAGAR:</p>
+                        <h2 class="total-value" style="font-size: 2rem;">$@subtotal.ToString("N2")</h2>
                     </div>
                 </div>
 
-                <div class="col-lg-4">
-                    <div class="card shadow-lg sticky-top" style="top: 20px;">
-                        <div class="card-body">
-                            <h4 class="card-title text-primary">Resumen de pago</h4>
-                            <hr />
+                <!-- Método de pago -->
+                <div class="detail-section" style="margin-top: 30px;">
+                    <h5 class="group-title" style="margin-bottom: 15px;">Método de Pago</h5>
 
-                            <div class="d-flex justify-content-between font-weight-bold h5">
-                                <span>TOTAL A PAGAR:</span>
-                                <span class="text-danger">$@subtotal.ToString("N2")</span>
-                            </div>
-
-                            <hr />
-
-                            <div class="form-group mb-4">
-                                <label for="metodoDePago" class="font-weight-bold">Método de Pago:</label>
-                                <select id="metodoDePago" name="metodoDePago" class="form-control" required>
-                                    <option value="">-- Seleccionar --</option>
-                                    <option value="Efectivo">Efectivo</option>
-                                    <option value="Transferencia">Transferencia</option>
-                                    <option value="Credito">Crédito (A plazos)</option>
-                                </select>
+                    <div class="form-floating neon-input" style="margin-top: 15px;">
+                        <select id="metodoDePago" name="metodoDePago" class="form-control" required>
+                            <option value="">-- Seleccionar --</option>
+                            <option value="Efectivo">Efectivo</option>
+                            <option value="Transferencia">Transferencia</option>
+                            <option value="Credito">Crédito (A plazos)</option>
+                        </select>
+                        <label for="metodoDePago">Seleccione un método de pago</label>
+                    </div>
+                </div>
 
             </div>
-                            </div>
 
-                            <button type="submit" class="btn btn-danger btn-lg btn-block">
-                                <i class="fas fa-handshake"></i> FINALIZAR COMPRA
-                            </button>
-                        </div>
-                    </div>
-                </div>
+            <!-- Footer -->
+            <div class="factura-footer" style="margin-top: 50px;">
+                <a asp-action="Crear" class="btn-primary-action">
+                    <i class="fas fa-undo"></i> Seguir Comprando
+                </a>
+
+                <button type="submit" class="btn-secondary-action">
+                    <i class="fas fa-handshake"></i> Finalizar Compra
+                </button>
             </div>
         </form>
     }
 </div>
 
-@section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-}

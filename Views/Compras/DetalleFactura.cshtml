@@ -4,77 +4,102 @@
     ViewData["Title"] = $"Factura de Compra #{Model.IdCompra}";
 }
 
-<div class="container my-5">
-    <div class="card shadow">
-        <div class="card-header bg-primary text-white text-center">
-            <h1 class="mb-0"> Factura de Compra No. @Model.IdCompra</h1>
+<div class="main-content-card factura-card">
+
+    <div class="factura-header">
+        <h1 class="neon-title-factura">
+            FACTURA DE COMPRA
+            <span class="factura-id">No. @Model.IdCompra</span>
+        </h1>
+        <hr class="neon-divider" />
+    </div>
+
+    <div class="data-section">
+
+        <div class="data-group cliente-data">
+            <h5 class="group-title">Datos del Proveedor</h5>
+
+            <p>
+                <span class="data-label">Proveedor:</span>
+                @Model.IdProveedorNavigation.Nombre @Model.IdProveedorNavigation.Apellido
+            </p>
+
+            <p>
+                <span class="data-label">Teléfono:</span>
+                @Model.IdProveedorNavigation.Telefono
+            </p>
         </div>
-        <div class="card-body">
 
-            <div class="row mb-4">
-                <div class="col-md-6">
-                    <h5>Detalles del Comprador</h5>
-                    <p class="mb-1">
-                        Usuario: @Model.IdProveedorNavigation.Nombre @Model.IdProveedorNavigation.Apellido
-                    </p>
-                    <p class="mb-1">
-                        Teléfono: @Model.IdProveedorNavigation.Telefono
-                    </p>
-                </div>
-                <div class="col-md-6 text-md-end">
-                    <h5>Datos de la Compra</h5>
-                    
-                    <p class="mb-1">
-                        Fecha: @(Model.Fecha.HasValue? Model.Fecha.Value.ToString("dd/MM/yyyy HH:mm") : "N/A")
-                    </p>
-                    <p class="mb-1">
-                        Estado: @Model.Observaciones
-                    </p>
+        <div class="data-group venta-data">
+            <h5 class="group-title">Datos de la Transacción</h5>
 
-                    
-                    <p class="mb-1">
-                        Método de Pago: <span class="badge bg-success">@Model.MetodoPago</span>
-                    </p>
-                </div>
-            </div>
+            <p>
+                <span class="data-label">Fecha:</span>
+                @(Model.Fecha.HasValue ? Model.Fecha.Value.ToString("dd/MM/yyyy HH:mm") : "N/A")
+            </p>
 
-            <hr />
+            <p>
+                <span class="data-label">Estado:</span>
+                <span class="badge-status">@Model.Observaciones</span>
+            </p>
 
-            <h5>Productos Adquiridos</h5>
-            <table class="table table-striped table-bordered mt-3">
-                <thead class="bg-light">
+            <p>
+                <span class="data-label">Método Pago:</span>
+                <span class="badge-payment">@Model.MetodoPago</span>
+            </p>
+        </div>
+
+    </div>
+
+    <hr class="neon-divider" />
+
+    <div class="detail-section">
+        <h5 class="group-title">Productos Adquiridos</h5>
+
+        <table class="futuristic-table">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th class="text-center">Cantidad</th>
+                    <th class="text-end">Precio Unitario</th>
+                    <th class="text-end">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var detalle in Model.CompraDetalles)
+                {
                     <tr>
-                        <th>Producto</th>
-                        <th>Cantidad</th>
-                        <th>Precio Unitario</th>
-                        <th>Subtotal</th>
+                        <td>@detalle.IdProductoNavigation.Nombre</td>
+                        <td class="text-center">@detalle.Cantidad</td>
+                        <td class="text-end">@detalle.PrecioUnitario.ToString("C0")</td>
+                        <td class="text-end total-row">
+                            @((detalle.Cantidad * detalle.PrecioUnitario).ToString("C0"))
+                        </td>
                     </tr>
-                </thead>
-                <tbody>
-                    @foreach (var detalle in Model.CompraDetalles)
-                    {
-                        <tr>
-                            <td>@detalle.IdProductoNavigation.Nombre</td>
-                            <td>@detalle.Cantidad</td>
-                            <td>@detalle.PrecioUnitario.ToString("C")</td>
-                            <td>@(detalle.Cantidad* detalle.PrecioUnitario)</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+                }
+            </tbody>
+        </table>
+    </div>
 
-            <div class="row justify-content-end mt-4">
-                <div class="col-md-4">
-                    <div class="bg-light p-3 border rounded text-end">
-                        <p class="fs-5 mb-0">Total General Pagado:</p>
-                        <h2 class="text-primary">@Model.Total.ToString("C")</h2>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-        <div class="card-footer text-center">
-            <a asp-action="Crear" class="btn btn-primary">Nueva Compra</a>
+    <div class="total-summary">
+        <div class="total-box">
+            <p class="total-label">Total General Pagado:</p>
+            <h2 class="total-value">@Model.Total.ToString("C0")</h2>
         </div>
     </div>
+
+    <div class="factura-footer">
+        <a asp-action="Crear" class="btn-primary-action">
+            <i class="fas fa-plus-circle"></i> Registrar Nueva Compra
+        </a>
+
+        <button onclick="window.print()" class="btn-secondary-action">
+            <i class="fas fa-print"></i> Imprimir Factura
+        </button>
+    </div>
+
 </div>
+
+@section Scripts {
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+}

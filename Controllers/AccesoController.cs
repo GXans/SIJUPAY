@@ -24,12 +24,10 @@ namespace SIJUPAY.Controllers
                 var ingreso = new List<Claim>
                    {
                     new Claim(ClaimTypes.Name,n_usuario.Nombre),
-                    new Claim("Telefono",n_usuario.Telefono)
+                    new Claim("Telefono",n_usuario.Telefono),
+                    new Claim(ClaimTypes.Role, n_usuario.TipoUsuario)
                    };
-                foreach (var rol in n_usuario.TipoUsuario.ToString())
-                {
-                    ingreso.Add(new Claim(ClaimTypes.Role, rol.ToString()));
-                }
+                
                 var identificaringreso = new ClaimsIdentity(ingreso,CookieAuthenticationDefaults.AuthenticationScheme);
                 await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identificaringreso));
                 return RedirectToAction("Index", "Home");
@@ -48,13 +46,21 @@ namespace SIJUPAY.Controllers
         [HttpPost]
         public IActionResult Registro(Usuario _usuario)
         {
+            Logica_Usuarios logicaUsuario = new Logica_Usuarios();
+
+            // 1. VALIDACIÓN BÁSICA DE CAMPOS (ya existía)
             if (string.IsNullOrEmpty(_usuario.Nombre) || string.IsNullOrEmpty(_usuario.Apellido) || string.IsNullOrEmpty(_usuario.Contrasena) || string.IsNullOrEmpty(_usuario.Telefono))
             {
                 ViewData["Mensaje"] = "Debe completar todos los campos requeridos.";
                 return View();
             }
 
-            Logica_Usuarios logicaUsuario = new Logica_Usuarios();
+            if (logicaUsuario.existeTelefono(_usuario.Telefono))
+            {
+                ViewData["Mensaje"] = "El número de teléfono ya se encuentra registrado. Por favor, inicie sesión o use otro número.";
+                return View(); // Regresa a la vista con el mensaje de error
+            }
+
 
             _usuario.TipoUsuario = "Cliente";
 
@@ -66,7 +72,7 @@ namespace SIJUPAY.Controllers
             }
             else
             {
-                ViewData["Mensaje"] = "Error al registrar el usuario. El número de teléfono podría ya existir.";
+                ViewData["Mensaje"] = " Error inesperado al intentar registrar el usuario. Intente más tarde.";
                 return View();
             }
         }

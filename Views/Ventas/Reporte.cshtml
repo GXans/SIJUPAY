@@ -3,162 +3,197 @@
 @using SIJUPAY.Models.ViewModels
 
 @{
-    ViewData["Title"] = "Informe de Ventas Avanzado";
+    ViewData["Title"] = "Reporte de Ventas | Administrador";
+    var datosGraficoJson = ViewBag.DatosGraficoJson as string ?? "[]";
 }
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<h1> Informe de Ventas</h1>
+<div class="main-content-card report-card">
+    <div class="header-section">
+        <h2 class="neon-title-report"><i class="fas fa-chart-bar"></i> Reporte de Ventas del Sistema</h2>
+        <p class="subtitle">Análisis detallado de transacciones finalizadas.</p>
+    </div>
 
-<form asp-action="Reporte" method="post" class="mb-4 p-4 border rounded shadow-sm bg-light">
-    <div class="row">
+    <hr class="neon-divider" />
 
-        <div class="col-md-4">
-            <div class="form-group">
-                <label asp-for="IdCategoria" class="font-weight-bold">Categoría:</label>
-                <select asp-for="IdCategoria" class="form-control"
-                        asp-items="@(new SelectList(Model.ListaCategorias, "IdCategoria", "Nombre"))">
-                    <option value="">-- Todas las Categorías --</option>
+    <form asp-action="Reporte" method="post" class="form-report-filter">
+        <div class="row g-3 align-items-end">
+
+            <div class="col-md-4">
+                <label asp-for="FechaInicio" class="form-label-custom">Fecha Inicio</label>
+                <input asp-for="FechaInicio" type="date" class="form-control-custom" />
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="FechaFin" class="form-label-custom">Fecha Fin</label>
+                <input asp-for="FechaFin" type="date" class="form-control-custom" />
+            </div>
+
+            <div class="col-md-3">
+                <label asp-for="IdCategoria" class="form-label-custom">Categoría de Producto</label>
+                <select asp-for="IdCategoria" class="form-control-custom"
+                        asp-items="@(new SelectList(ViewBag.Categorias, "IdCategoria", "Nombre"))">
+                    <option value="">-- Todas --</option>
                 </select>
             </div>
-        </div>
 
-        <div class="col-md-3">
-            <div class="form-group">
-                <label asp-for="FechaInicio" class="font-weight-bold">Fecha de Inicio:</label>
-                <input asp-for="FechaInicio" type="date" class="form-control" />
+            <div class="col-md-1">
+                <button type="submit" class="btn-primary-action btn-icon-only" title="Filtrar">
+                    <i class="fas fa-filter">Filtrar</i>
+                </button>
             </div>
         </div>
+    </form>
 
-        <div class="col-md-3">
-            <div class="form-group">
-                <label asp-for="FechaFin" class="font-weight-bold">Fecha de Fin:</label>
-                <input asp-for="FechaFin" type="date" class="form-control" />
+    <hr class="neon-divider" />
+
+    @if (Model.ResultadosVentas != null && Model.ResultadosVentas.Any())
+    {
+        <div class="summary-and-chart">
+
+            <div class="chart-container-bar">
+                <h4 class="chart-title">Ventas Totales por Categoría</h4>
+                <canvas id="ventasChart"></canvas>
             </div>
+
+            <div class="total-box-report">
+                <p class="total-label">Total Neto de Ventas:</p>
+                <h2 class="total-value-report">@Model.TotalVentas.ToString("C0")</h2>
+                <small class="text-muted">(@Model.ResultadosVentas.Count() transacciones)</small>
+            </div>
+
         </div>
 
-        <div class="col-md-2 d-flex align-items-end">
-            <button type="submit" class="btn btn-primary btn-block">
-                <i class="fas fa-search"></i> Generar
-            </button>
+        <hr class="neon-divider" />
+
+        <h4 class="table-title"><i class="fas fa-list-alt"></i> Detalle de Transacciones</h4>
+        <div class="table-responsive">
+            <table class="futuristic-table">
+                <thead>
+                    <tr>
+                        <th>ID Venta</th>
+                        <th>Fecha</th>
+                        <th>Cliente</th>
+                        <th>Teléfono</th>
+                        <th>Método Pago</th>
+                        <th>Total</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var venta in Model.ResultadosVentas)
+                    {
+                        <tr>
+                            <td>#@venta.IdVenta</td>
+                            <td>@(venta.Fecha.HasValue? venta.Fecha.Value.ToString("dd/MM/yyyy HH:mm") : "N/A")</td>
+                            <td>@venta.IdClienteNavigation.Nombre @venta.IdClienteNavigation.Apellido</td>
+                            <td>@venta.IdClienteNavigation.Telefono</td>
+                            <td><span class="payment-badge">@venta.MetodoPago</span></td>
+                            <td class="text-end total-row-small">@venta.Total.ToString("C0")</td>
+                            <td>
+                                <a asp-action="DetalleFactura" asp-route-id="@venta.IdVenta" class="btn-secondary-action-small">
+                                    <i class="fas fa-eye"></i> Ver Detalle
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         </div>
-    </div>
-</form>
-
-@if (Model.ResultadosVentas != null && Model.ResultadosVentas.Any())
-{
-
-    <div class="row mb-4">
-        <div class="col-12">
-            <h3 class="mb-3" style="text-align:center">Resultado</h3>
-            <p class="h4 text-success" style="text-align:center">Total neto de ventas en el rango de fechas: $@Model.TotalVentas.ToString("N2")</p>
+    }
+    else if (Model.ResultadosVentas != null)
+    {
+        <div class="empty-message-report">
+            <i class="fas fa-exclamation-triangle"></i> No se encontraron ventas finalizadas con los filtros aplicados.
         </div>
-    </div>
-
-    <h3 class="mt-4" style="text-align:center">Gráfico por categoría</h3>
-    <div class="card p-3 mb-5 shadow">
-        <canvas id="graficoVentas" style="max-height: 400px;"></canvas>
-    </div>
-
-    <h3 class="mt-4">Detalle de Ventas</h3>
-    <table class="table table-striped table-hover">
-        <thead class="thead-dark">
-            <tr>
-                <th>ID Venta</th>
-                <th>Fecha</th>
-                <th>Cliente</th>
-                <th>Método Pago</th>
-                <th>Total</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var venta in Model.ResultadosVentas)
-            {
-                <tr>
-                    <td>@venta.IdVenta</td>
-                    <td>@(venta.Fecha?.ToString("yyyy-MM-dd") ?? "N/A")</td>
-                    <td>@(venta.IdClienteNavigation?.Nombre ?? "N/A")</td>
-                    <td>@venta.MetodoPago</td>
-                    <td>$@venta.Total.ToString("N2")</td>
-                    <td>
-                        <a asp-action="DetalleFactura" asp-route-id="@venta.IdVenta" class="btn btn-sm btn-info">Ver Detalle</a>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
-else if (Model.FechaInicio.HasValue || Model.FechaFin.HasValue || Model.IdCategoria.HasValue)
-{
-    <div class="alert alert-warning mt-4">
-        <i class="fas fa-exclamation-triangle"></i> No se encontraron ventas finalizadas para los filtros especificados.
-    </div>
-}
+    }
+</div>
 
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 
-    @if (ViewBag.DatosGraficoJson != null)
-    {
-        <script>
-            // 1. Obtener los datos JSON de C#
-            var dataJson = '@Html.Raw(ViewBag.DatosGraficoJson)';
-            var dataGrafico = JSON.parse(dataJson);
+    <script>
+        const datosGraficoJson = '@Html.Raw(datosGraficoJson)';
 
-            // 2. Preparar datos para Chart.js
-            var etiquetas = dataGrafico.map(d => d.Etiqueta);
-            var valores = dataGrafico.map(d => d.Valor);
+        // Colores neón consistentes (usamos el primer color para todas las barras)
+        const neonBarColor = 'rgba(0, 229, 255, 0.7)'; // Azul
+        const neonBarBorder = 'rgba(0, 229, 255, 1)';
 
-            // Colores dinámicos
-            const colores = [
-                'rgba(75, 192, 192, 0.6)',
-                'rgba(255, 99, 132, 0.6)',
-                'rgba(54, 162, 235, 0.6)',
-                'rgba(255, 206, 86, 0.6)',
-                'rgba(153, 102, 255, 0.6)',
-                'rgba(255, 159, 64, 0.6)'
-            ];
+        try {
+            const datosGrafico = JSON.parse(datosGraficoJson);
 
-            // 3. Dibujar el Gráfico de Barras
-            const ctx = document.getElementById('graficoVentas');
+            if (datosGrafico.length > 0) {
+                const ctx = document.getElementById('ventasChart').getContext('2d');
 
-            new Chart(ctx, {
-                type: 'bar', // Tipo de gráfico: barras
-                data: {
-                    labels: etiquetas,
-                    datasets: [{
-                        label: 'Venta Total ($)',
-                        data: valores,
-                        backgroundColor: colores.slice(0, etiquetas.length), // Asigna un color a cada barra
-                        borderColor: colores.slice(0, etiquetas.length).map(c => c.replace('0.6', '1')), // Versión sólida para el borde
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            display: false // No mostrar leyenda, la etiqueta ya está clara
-                        },
-                        title: {
-                            display: true,
-                            text: 'Total de Ventas por Categoría Seleccionada'
-                        }
+                const chart = new Chart(ctx, {
+                    type: 'bar', // ⬅️ CAMBIO A GRÁFICO DE BARRAS
+                    data: {
+                        labels: datosGrafico.map(d => d.Etiqueta),
+                        datasets: [{
+                            label: 'Monto Vendido',
+                            data: datosGrafico.map(d => d.Valor),
+                            backgroundColor: neonBarColor, // Un solo color para la serie
+                            borderColor: neonBarBorder,
+                            borderWidth: 2,
+                            hoverBackgroundColor: 'rgba(118, 255, 3, 0.8)', // Hover verde neón
+                            hoverBorderColor: 'rgba(118, 255, 3, 1)',
+                        }]
                     },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Monto Total ($)'
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false // No mostrar leyenda para el gráfico de barras simple
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed.y !== null) {
+                                            // Formato de moneda
+                                            label += new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(context.parsed.y);
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)', // Líneas de grilla suaves
+                                    borderColor: 'rgba(255, 255, 255, 0.5)'
+                                },
+                                ticks: {
+                                    color: '#00e5ff', // Color de texto de los valores Y (azul neón)
+                                    callback: function(value, index, values) {
+                                        // Muestra valores abreviados si son grandes (ej. 10K)
+                                        if (value >= 1000) return (value / 1000) + 'K';
+                                        return value;
+                                    }
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)',
+                                    borderColor: 'rgba(255, 255, 255, 0.5)'
+                                },
+                                ticks: {
+                                    color: '#76ff03' // Color de texto de las etiquetas X (verde neón)
+                                }
                             }
                         }
                     }
-                }
-            });
-        </script>
-    }
+                });
+            }
+        } catch (e) {
+             console.error("Error al parsear datos del gráfico:", e);
+        }
+    </script>
 }

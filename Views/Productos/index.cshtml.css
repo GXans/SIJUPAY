@@ -1,0 +1,61 @@
+﻿body {
+    background: #0d1117 !important;
+    color: #e6edf3;
+}
+
+.card.futuristic {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    transition: transform .2s ease, box-shadow .3s ease, border-color .3s ease;
+    box-shadow: 0 0 10px rgba(0, 123, 255, 0.15);
+}
+
+    .card.futuristic:hover {
+        transform: translateY(-4px);
+        border-color: #00aaff;
+        box-shadow: 0 0 18px rgba(0, 170, 255, 0.4);
+    }
+
+.btn-future,
+.btn-future.btn-sm {
+    border-radius: 10px;
+    border: 2px solid #00c6ff;
+    background: linear-gradient(135deg, #032135, #053a5c) !important;
+    color: #a8ecff !important;
+    padding: 12px 20px;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    display: inline-block;
+    text-align: center;
+    box-shadow: 0 0 10px rgba(0, 190, 255, 0.4), inset 0 0 6px rgba(0, 190, 255, 0.2);
+    transition: all .25s ease;
+}
+
+    .btn-future:hover,
+    .btn-future.btn-sm:hover {
+        border-color: #5ceeff;
+        background: linear-gradient(135deg, #05476f, #021622) !important;
+        color: #e8fcff !important;
+        transform: translateY(-3px);
+        box-shadow: 0 0 18px rgba(0, 220, 255, 0.7), inset 0 0 10px rgba(0, 220, 255, 0.3);
+    }
+
+
+
+.badge {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    border-radius: 6px;
+}
+
+/* Imágenes controladas */
+.product-img {
+    height: 200px;
+    width: 100%;
+    object-fit: cover;
+    border-radius: 12px 12px 0 0;
+    border-bottom: 1px solid #30363d;
+}
+

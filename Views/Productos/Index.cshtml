@@ -1,24 +1,20 @@
-﻿@model IEnumerable<SIJUPAY.Models.Producto>
+﻿<h1 class="mb-4 text-light">Inventario de Productos</h1>
 
-@{
-    ViewData["Title"] = "Inventario de Productos";
-}
-
-<h1 class="mb-4">Inventario de Productos</h1>
-<form asp-action="Index" method="get" class="row mb-3">
+<form asp-action="Index" method="get" class="row g-3 mb-4">
     <div class="col-md-4">
-        <input type="text" name="search" class="form-control"
+        <input type="text" name="search" class="form-control bg-dark text-light border-secondary"
                placeholder="Buscar..." value="@ViewBag.Search" />
     </div>
 
     <div class="col-md-4">
-        <select name="categoria" class="form-control" asp-items="ViewBag.Categorias">
+        <select name="categoria" class="form-control bg-dark text-light border-secondary"
+                asp-items="ViewBag.Categorias">
             <option value="">-- Todas las categorías --</option>
         </select>
     </div>
 
     <div class="col-md-4">
-        <button class="btn btn-primary w-100">Filtrar</button>
+        <button class="btn btn-future w-100">Filtrar</button>
     </div>
 </form>
 
@@ -30,35 +26,31 @@
     @foreach (var item in Model)
     {
         <div class="col">
-            <div class="card h-100 shadow-sm">
+            <div class="card futuristic h-100 shadow-lg">
 
-                
                 @if (item.Foto != null && item.Foto.Length > 0)
                 {
                     var base64 = Convert.ToBase64String(item.Foto);
                     var imgsrc = $"data:image/png;base64,{base64}";
-                    <img src="@imgsrc" class="card-img-top" style="height: 220px; object-fit: cover;" />
+                    <img src="@imgsrc" class="product-img" />
                 }
                 else
                 {
-                    <div class="d-flex align-items-center justify-content-center bg-light"
-                         style="height: 220px;">
-                        <span class="text-muted">Sin Foto</span>
+                    <div class="d-flex align-items-center justify-content-center bg-secondary text-dark product-img">
+                        Sin Foto
                     </div>
                 }
 
                 <div class="card-body">
-                    <h5 class="card-title">@item.Nombre</h5>
+                    <h5 class="card-title text-info fw-bold">@item.Nombre</h5>
 
-                    <p class="card-text">
-                        <strong>Precio:</strong> @item.Precio.ToString("C") <br />
-
+                    <p class="card-text text-light small">
+                        <strong>Precio:</strong> @item.Precio.ToString("C0") <br />
                         <strong>Categoría:</strong> @item.IdCategoriaNavigation.Nombre <br />
-
                         <strong>Stock:</strong> @item.Stock <br />
 
                         <strong>Estado:</strong>
-                        @if (item.Estado == true)
+                        @if (item.Estado)
                         {
                             <span class="badge bg-success">Activo</span>
                         }
@@ -69,12 +61,11 @@
                     </p>
                 </div>
 
-                
-                <div class="card-footer bg-white">
-                    <div class="d-flex justify-content-between">
-                        <a asp-action="Edit" asp-route-id="@item.IdProducto" class="btn btn-primary btn-sm">Editar</a>
-                        <a asp-action="Details" asp-route-id="@item.IdProducto" class="btn btn-info btn-sm text-white">Detalles</a>
-                        <a asp-action="Delete" asp-route-id="@item.IdProducto" class="btn btn-danger btn-sm">Eliminar</a>
+                <div class="card-footer bg-transparent border-0">
+                    <div class="d-flex justify-content-between gap-2">
+                        <a asp-action="Edit" asp-route-id="@item.IdProducto" class="btn btn-primary btn-sm w-100">Editar</a>
+                        <a asp-action="Details" asp-route-id="@item.IdProducto" class="btn btn-info btn-sm w-100 text-white">Detalles</a>
+                        <a asp-action="Delete" asp-route-id="@item.IdProducto" class="btn btn-danger btn-sm w-100">Eliminar</a>
                     </div>
                 </div>
 

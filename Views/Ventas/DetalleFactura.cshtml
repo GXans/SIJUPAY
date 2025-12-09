@@ -4,75 +4,105 @@
     ViewData["Title"] = $"Factura de Venta #{Model.IdVenta}";
 }
 
-<div class="container my-5">
-    <div class="card shadow">
-        <div class="card-header bg-success text-white text-center">
-            <h1 class="mb-0">Factura de Venta No. @Model.IdVenta</h1>
+<div class="main-content-card factura-card">
+
+    <div class="factura-header">
+        <h1 class="neon-title-factura">
+            FACTURA DE COMPRA
+            <span class="factura-id">No. @Model.IdVenta</span>
+        </h1>
+        <hr class="neon-divider" />
+    </div>
+
+    <div class="data-section">
+
+        <div class="data-group cliente-data">
+            <h5 class="group-title"> Datos del Cliente</h5>
+            <p>
+                <span class="data-label">Cliente:</span> @Model.IdClienteNavigation.Nombre @Model.IdClienteNavigation.Apellido
+            </p>
+            <p>
+                <span class="data-label">Teléfono:</span> @Model.IdClienteNavigation.Telefono
+            </p>
         </div>
-        <div class="card-body">
 
-            <div class="row mb-4">
-                <div class="col-md-6">
-                    <h5>Detalles del Cliente</h5>
-                    <p class="mb-1">
-                        Cliente: @Model.IdClienteNavigation.Nombre @Model.IdClienteNavigation.Apellido
-                    </p>
-                    <p class="mb-1">
-                        Teléfono: @Model.IdClienteNavigation.Telefono
-                    </p>
-                </div>
-                <div class="col-md-6 text-md-end">
-                    <h5>Datos de la Venta</h5>
-                    
-                    <p class="mb-1">
-                        Fecha: @(Model.Fecha.HasValue? Model.Fecha.Value.ToString("dd/MM/yyyy HH:mm") : "N/A")
-                    </p>
-                    <p class="mb-1">
-                        Estado: @Model.Observaciones
-                    </p>
-                    <p class="mb-1">
-                        Método de Pago: <span class="badge bg-primary">@Model.MetodoPago</span>
-                    </p>
-                </div>
-            </div>
+        <div class="data-group venta-data">
+            <h5 class="group-title"> Datos de la Compra</h5>
+            <p>
+                <span class="data-label">Fecha:</span> @(Model.Fecha.HasValue? Model.Fecha.Value.ToString("dd/MM/yyyy HH:mm") : "N/A")
+            </p>
+            <p>
+                <span class="data-label">Estado:</span> <span class="badge-status">@Model.Observaciones</span>
+            </p>
+            <p>
+                <span class="data-label">Método Pago:</span> <span class="badge-payment">@Model.MetodoPago</span>
+            </p>
+        </div>
 
-            <hr />
+    </div>
 
-            <h5>Productos Vendidos</h5>
-            <table class="table table-striped table-bordered mt-3">
-                <thead class="bg-light">
+    <hr class="neon-divider" />
+
+    <div class="detail-section">
+        <h5 class="group-title"> Detalles de la Compra</h5>
+
+        <table class="futuristic-table">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th class="text-center">Cantidad</th>
+                    <th class="text-end">Precio Unitario</th>
+                    <th class="text-end">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var detalle in Model.VentaDetalles)
+                {
                     <tr>
-                        <th>Producto</th>
-                        <th>Cantidad</th>
-                        <th>Precio Unitario</th>
-                        <th>Subtotal</th>
+                        <td>@detalle.IdProductoNavigation.Nombre</td>
+                        <td class="text-center">@detalle.Cantidad</td>
+                        <td class="text-end">@detalle.PrecioUnitario.ToString("C0")</td>
+                        <td class="text-end total-row">@((detalle.Cantidad * detalle.PrecioUnitario).ToString("C0"))</td>
                     </tr>
-                </thead>
-                <tbody>
-                    @foreach (var detalle in Model.VentaDetalles)
-                    {
-                        <tr>
-                            <td>@detalle.IdProductoNavigation.Nombre</td>
-                            <td>@detalle.Cantidad</td>
-                            <td>@detalle.PrecioUnitario.ToString("C")</td>
-                            <td>@(detalle.Cantidad* detalle.PrecioUnitario).ToString("C")</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+                }
+            </tbody>
+        </table>
+    </div>
 
-            <div class="row justify-content-end mt-4">
-                <div class="col-md-4">
-                    <div class="bg-light p-3 border rounded text-end">
-                        <p class="fs-5 mb-0">Total General Cobrado:</p>
-                        <h2 class="text-success">@Model.Total.ToString("C")</h2>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-        <div class="card-footer text-center">
-            <a asp-action="Crear" class="btn btn-success">Regresar al catalogo</a>
+    <div class="total-summary">
+        <div class="total-box">
+            <p class="total-label">Total General Cobrado:</p>
+            <h2 class="total-value">@Model.Total.ToString("C0")</h2>
         </div>
     </div>
+
+    @if (User.IsInRole("Administrador"))
+    {
+        <div class="factura-footer">
+            <a asp-action="Reporte" class="btn-primary-action">
+                <i class="fas fa-undo">Regresar </i>
+            </a>
+            <button onclick="window.print()" class="btn-secondary-action">
+                <i class="fas fa-print">Imprimir Factura</i>
+            </button>
+        </div>
+    }
+    else
+    {
+
+
+    <div class="factura-footer">
+        <a class="btn-primary-action" asp-action="Crear">
+            <i class="fas fa-undo">Regresar </i>
+        </a>
+        <button onclick="window.print()" class="btn-secondary-action">
+            <i class="fas fa-print">Imprimir Factura</i>
+        </button>
+    </div>
+    }
+
 </div>
+
+@section Scripts {
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+}

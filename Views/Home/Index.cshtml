@@ -1,8 +1,72 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model Usuario
+@{
+    ViewData["Title"] = "Home";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<style>
+    .welcome-card {
+        max-width: 600px;
+        margin: 50px auto;
+        padding: 30px;
+        background: rgba(30, 35, 50, 0.9);
+        border: 1px solid #00e5ff;
+        border-radius: 10px;
+        box-shadow: 0 0 25px rgba(0, 229, 255, 0.3);
+        color: #fff;
+        text-align: center;
+    }
+
+    .welcome-title {
+        color: #76ff03; 
+        font-size: 2.5rem;
+        margin-bottom: 5px;
+        letter-spacing: 2px;
+    }
+
+    .user-info p {
+        background: rgba(0, 0, 0, 0.3);
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 5px;
+        border-left: 5px solid #00e5ff;
+        text-align: left;
+    }
+
+    .user-info span {
+        font-weight: bold;
+        color: #00e5ff;
+        display: inline-block;
+        width: 120px; 
+    }
+
+    .logout-button {
+        display: inline-block;
+        padding: 10px 20px;
+        background: #ff1744; 
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        margin-top: 20px;
+        font-weight: bold;
+        transition: background 0.2s;
+    }
+
+        .logout-button:hover {
+            background: #d50000;
+        }
+</style>
+
+<div class="welcome-card">
+    <div class="welcome-title">ACCESO CONCEDIDO</div>
+    <h2>Bienvenido a SiJuPay, @Model.Nombre</h2>
+
+    <p style="color: #ccc;">Mi información de SiJuPay:</p>
+
+    <div class="user-info">
+        <p><span>Nombre Completo:</span> @Model.Nombre @Model.Apellido</p>
+        <p><span>Teléfono (ID):</span> @Model.Telefono</p>
+        <p><span>Rol de Sistema:</span> <strong style="color: #76ff03;">@Model.TipoUsuario</strong></p>
+    </div>
+
+    <a href="@Url.Action("Salir", "Acceso")" class="logout-button">Cerrar Sesión</a>
 </div>

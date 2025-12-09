@@ -345,11 +345,11 @@ namespace SIJUPAY.Controllers
                 .OrderBy(u => u.Nombre)
                 .ToListAsync();
 
-            
-            DateTime fechaInicio = model.FechaInicio ?? DateTime.MinValue;
-            DateTime fechaFin = model.FechaFin?.AddDays(1) ?? DateTime.MaxValue;
 
-            
+            DateTime fechaInicio = model.FechaInicio ?? new DateTime(1753, 1, 1);
+            DateTime fechaFin = model.FechaFin?.AddDays(1) ?? new DateTime(9999, 12, 31);
+
+
             var query = _context.Compras 
                 .Include(c => c.IdProveedorNavigation)
                 .Where(c => c.Fecha >= fechaInicio &&

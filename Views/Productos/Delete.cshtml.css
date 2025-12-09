@@ -1,0 +1,76 @@
+﻿body {
+    background: #0d1117;
+    color: #e6edf3;
+}
+
+.card.futuristic {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    box-shadow: 0 0 12px rgba(255, 0, 0, 0.2);
+}
+
+.card-header.futuristic-danger {
+    background: #2c0d0d;
+    color: #ff3864;
+    border-bottom: 1px solid #30363d;
+}
+
+.text-muted {
+    color: #9ca3af !important;
+}
+
+.desc-box {
+    background: #0d1117;
+    color: #e6edf3;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.img-product {
+    max-height: 150px;
+    max-width: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 0 8px rgba(255, 0, 0, 0.4);
+}
+
+.btn-back {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid #00c6ff;
+    background: #0a192f;
+    color: #00c6ff;
+    font-weight: bold;
+    text-decoration: none;
+    transition: 0.2s;
+}
+
+    .btn-back:hover {
+        background: #02101f;
+        box-shadow: 0 0 10px #00c6ff;
+        color: #e6edf3;
+    }
+
+.btn-danger-lg {
+    font-size: 1.1rem;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: 1px solid #ff3864;
+    background: #2c0d0d;
+    color: #ff3864;
+    font-weight: bold;
+    transition: 0.2s;
+}
+
+    .btn-danger-lg:hover {
+        background: #1b0a0a;
+        box-shadow: 0 0 10px #ff3864;
+        color: #fff;
+    }
+
+.border-end {
+    border-right: 1px solid #30363d !important;
+}
+

@@ -1,57 +1,84 @@
 ﻿@model IEnumerable<SIJUPAY.Models.Producto>
 
 @{
-    ViewData["Title"] = "Catálogo de Compras";
+    ViewData["Title"] = "Gestión de Stock | Compras";
 }
 
-<h1 class="mb-4 text-primary" style="text-align:center"> Catálogo de Productos</h1>
+<div class="main-content-card stock-management-card">
+    <div class="header-section">
+        <h2 class="neon-title-report"><i class="fas fa-cubes"></i> Catálogo de Productos para Compra</h2>
+        <p class="subtitle">Selecciona los productos y cantidades a **adquirir** para aumentar el stock.</p>
+    </div>
 
-<div class="d-flex justify-content-end mb-4">
-    <a asp-action="Index" class="btn btn-secondary btn-sm shadow-sm me-3">
-        <i class="fas fa-list-alt"></i> Consultar Historial de Pago
-    </a>
-    <a asp-action="PagarCarrito" class="btn btn-success btn-sm shadow-sm">
-        <i class="fas fa-shopping-cart"></i> Ir al Carrito
-    </a>
-</div>
+    <hr class="neon-divider" />
 
-<div class="row row-cols-1 row-cols-md-3 g-4">
-    @foreach (var item in Model)
-    {
-        <div class="col">
-            <div class="card h-100 shadow-sm border-secondary">
+    <div class="d-flex justify-content-end mb-4">
+        <a asp-action="Index" class="btn-secondary-action me-3">
+            <i class="fas fa-list-alt"></i> Historial de Compras
+        </a>
+        <a asp-action="PagarCarrito" class="btn-primary-action">
+            <i class="fas fa-shopping-cart"></i> Ir al Carrito de Compra
+        </a>
+    </div>
 
-                
+    <div class="product-grid-compras">
+        @foreach (var item in Model)
+        {
+            <div class="product-card-compras">
                 @if (item.Foto != null && item.Foto.Length > 0)
                 {
                     var base64 = Convert.ToBase64String(item.Foto);
                     var imgsrc = $"data:image/png;base64,{base64}";
-                    <img src="@imgsrc" class="card-img-top" style="height: 180px; object-fit: cover;" />
+                    <div class="product-image-container">
+                        <img src="@imgsrc" alt="@item.Nombre" class="product-image" />
+                    </div>
                 }
                 else
                 {
-                    <div class="d-flex align-items-center justify-content-center bg-light" style="height: 180px;">
-                        <span class="text-muted">Sin Foto</span>
+                    <div class="product-image-container placeholder-image">
+                        <i class="fas fa-hdd"></i> <span>Sin Imagen</span>
                     </div>
                 }
 
-                <div class="card-body">
-                    <h5 class="card-title">@item.Nombre</h5>
-                    <p class="card-text small">
-                        <strong>Stock Actual:</strong> @item.Stock
+                <div class="card-content-compras">
+                    <h5 class="product-title-compras">@item.Nombre</h5>
+                    <p class="product-category-compras">
+                        <i class="fas fa-tag"></i> @item.IdCategoriaNavigation.Nombre
+                    </p>
+                    <p class="product-stock-compras">
+                        **Stock Actual:** <span class="stock-value">@item.Stock</span>
                     </p>
 
                     <form asp-action="AgregarAlCarrito" method="post">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="idProducto" value="@item.IdProducto" />
 
-                        <button type="submit" class="btn btn-primary w-100 mt-2">
-                            <i class="fas fa-plus"></i> Agregar al Carrito
+                        <div class="quantity-input-group">
+                            <label for="cantidad_@item.IdProducto" class="quantity-label">Cant. a Comprar:</label>
+                            <input type="number" id="cantidad_@item.IdProducto" name="cantidad"
+                                   class="form-control-custom quantity-input"
+                                   value="1" min="1" required />
+                        </div>
+
+                        <button type="submit" class="btn-primary-action-full mt-3">
+                            <i class="fas fa-cart-plus"></i> Añadir al Carrito
                         </button>
                     </form>
                 </div>
 
             </div>
+        }
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="empty-message-report">
+            <i class="fas fa-exclamation-triangle"></i> No hay productos en el catálogo para adquirir.
         </div>
     }
+
 </div>
+
+@section Scripts {
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+}

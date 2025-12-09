@@ -66,5 +66,61 @@ namespace SIJUPAY.Logica
             }
             return respuesta;
         }
+
+        public bool existeTelefono(string telefono)
+        {
+            bool existe = false;
+            using (SqlConnection conexion = new SqlConnection("Data Source=(LocalDb)\\MSSQLLocalDB;AttachDBfilename=|DataDirectory|\\SijuPay.mdf;Integrated Security=True"))
+            {
+                string consulta = "SELECT COUNT(*) FROM Usuario WHERE Telefono = @ptelefono";
+                SqlCommand comando = new SqlCommand(consulta, conexion);
+                comando.Parameters.AddWithValue("@ptelefono", telefono);
+                comando.CommandType = CommandType.Text;
+
+                try
+                {
+                    conexion.Open();
+                    int count = (int)comando.ExecuteScalar();
+
+                    if (count > 0)
+                    {
+                        existe = true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    existe = false;
+                }
+            }
+            return existe;
+        }
+        public Usuario obtenerUsuarioPorTelefono(string telefono)
+        {
+            Usuario objeto = new Usuario();
+            using (SqlConnection conexion = new SqlConnection("Data Source=(LocalDb)\\MSSQLLocalDB;AttachDBfilename=|DataDirectory|\\SijuPay.mdf;Integrated Security=True"))
+            {
+                string consulta = "SELECT IdUsuario, Nombre, Apellido, Telefono, TipoUsuario FROM Usuario WHERE Telefono = @ptelefono";
+                SqlCommand comando = new SqlCommand(consulta, conexion);
+                comando.Parameters.AddWithValue("@ptelefono", telefono);
+                comando.CommandType = CommandType.Text;
+                conexion.Open();
+
+                using (SqlDataReader datos = comando.ExecuteReader())
+                {
+                    if (datos.Read())
+                    {
+                        objeto = new Usuario()
+                        {
+                            IdUsuario = (int)datos["IdUsuario"],
+                            Nombre = datos["Nombre"].ToString(),
+                            Apellido = datos["Apellido"].ToString(),
+                            Telefono = datos["Telefono"].ToString(),
+                            TipoUsuario = datos["TipoUsuario"].ToString()
+                        };
+                    }
+                }
+            }
+            return objeto;
+        }
     }
 }

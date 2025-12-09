@@ -3,163 +3,167 @@
 @using SIJUPAY.Models.ViewModels
 
 @{
-    ViewData["Title"] = "Informe de Compras y Gastos";
+    ViewData["Title"] = "Reporte de Compras | Administrador";
+    // El controlador de Compras ya serializa los datos
+    var datosGraficoJson = ViewBag.DatosGraficoJson as string ?? "[]";
 }
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
-<h1>Informe de Compras y Gastos </h1>
+<div class="main-content-card report-card">
+    <div class="header-section">
+        <h2 class="neon-title-report"><i class="fas fa-chart-bar"></i> Reporte de Compras y Gastos</h2>
+        <p class="subtitle">Análisis detallado de transacciones de adquisiciones finalizadas.</p>
+    </div>
 
-<hr />
+    <hr class="neon-divider" />
 
-<form asp-action="Reporte" method="post" class="mb-4 p-4 border rounded shadow-sm bg-light">
-    <div class="row">
+    <form asp-action="Reporte" method="post" class="form-report-filter">
+        <div class="row g-3 align-items-end">
 
-        <div class="col-md-4">
-            <div class="form-group">
-                <label asp-for="IdProveedor" class="font-weight-bold">Proveedor:</label>
-                <select asp-for="IdProveedor" class="form-control"
+            <div class="col-md-4">
+                <label asp-for="IdProveedor" class="form-label-custom">Proveedor</label>
+                <select asp-for="IdProveedor" class="form-control-custom"
                         asp-items="@(new SelectList(Model.ListaProveedores, "IdUsuario", "Nombre"))">
                     <option value="">-- Todos los Proveedores --</option>
                 </select>
             </div>
-        </div>
 
-        <div class="col-md-3">
-            <div class="form-group">
-                <label asp-for="FechaInicio" class="font-weight-bold">Fecha de Inicio:</label>
-                <input asp-for="FechaInicio" type="date" class="form-control" />
+            <div class="col-md-4">
+                <label asp-for="FechaInicio" class="form-label-custom">Fecha Inicio</label>
+                <input asp-for="FechaInicio" type="date" class="form-control-custom" />
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="FechaFin" class="form-label-custom">Fecha Fin</label>
+                <input asp-for="FechaFin" type="date" class="form-control-custom" />
+            </div>
+
+            <div class="col-md-12 text-center mt-3">
+                <button type="submit" class="btn-primary-action btn-sm">
+                    <i class="fas fa-search"></i> Filtrar Reporte
+                </button>
             </div>
         </div>
+    </form>
 
-        <div class="col-md-3">
-            <div class="form-group">
-                <label asp-for="FechaFin" class="font-weight-bold">Fecha de Fin:</label>
-                <input asp-for="FechaFin" type="date" class="form-control" />
+    <div class="report-results-section mt-5">
+        @if (Model.ResultadosCompras != null && Model.ResultadosCompras.Any())
+        {
+            <div class="row mb-5">
+                <div class="col-md-8 mx-auto">
+                    <div class="chart-container">
+                        <h4 class="text-center neon-title-report-small">Distribución de Gasto Total por Proveedor</h4>
+                        <canvas id="graficoCompras"></canvas>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <div class="col-md-2 d-flex align-items-end">
-            <button type="submit" class="btn btn-warning btn-block text-white">
-                <i class="fas fa-search"></i> Generar
-            </button>
-        </div>
+            <div class="alert alert-success alert-neon text-center mt-4">
+                <h4><i class="fas fa-money-bill-wave"></i> Gasto Total Consolidado: @Model.TotalCompras.ToString("C")</h4>
+                <p>Mostrando @Model.ResultadosCompras.Count() compras en el periodo seleccionado.</p>
+            </div>
+
+            <h4 class="mt-5 mb-3 neon-title-report-small">Detalle de Compras (Resultados de la Búsqueda)</h4>
+            <div class="table-responsive">
+                <table class="table table-dark table-striped table-hover table-bordered table-report">
+                    <thead class="bg-dark-neon">
+                        <tr>
+                            <th>ID Compra</th>
+                            <th>Proveedor</th>
+                            <th>Fecha</th>
+                            <th>Total Gasto</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var compra in Model.ResultadosCompras)
+                        {
+                            <tr>
+                                <td>@compra.IdCompra</td>
+                                <td>@compra.IdProveedorNavigation.Nombre</td>
+                                <td>@(compra.Fecha.HasValue ? compra.Fecha.Value.ToString("dd/MM/yyyy HH:mm") : "N/A")</td>
+                                <td>@compra.Total.ToString("C")</td>
+                                <td>
+                                    <a asp-action="DetalleFactura" asp-route-id="@compra.IdCompra" class="btn btn-sm btn-info">
+                                        Ver
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+        }
+        else
+        {
+            <div class="alert alert-warning text-center">
+                No se encontraron resultados de compras que coincidan con los filtros seleccionados.
+            </div>
+        }
     </div>
-</form>
 
-@if (Model.ResultadosCompras != null && Model.ResultadosCompras.Any())
-{
-
-    <div class="row mb-4">
-        <div class="col-12">
-            <h3 class="mb-3"style="text-align:center">Resultados</h3>
-            <p class="h4 text-danger" style="text-align:center">Total neto de compras en el rango de fechas: $@Model.TotalCompras.ToString("N2")</p>
-        </div>
-    </div>
-
-    <h3 class="mt-4" style="text-align:center">Gráfico de Gasto por Proveedor</h3>
-    <div class="card p-3 mb-5 shadow">
-        <canvas id="graficoCompras" style="max-height: 400px;"></canvas>
-    </div>
-
-    <h3 class="mt-4">Detalle de Compras</h3>
-    <table class="table table-striped table-hover">
-        <thead class="thead-dark">
-            <tr>
-                <th>ID Compra</th>
-                <th>Fecha</th>
-                <th>Proveedor</th>
-                <th>Método Pago</th>
-                <th>Total</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var compra in Model.ResultadosCompras)
-            {
-                <tr>
-                    <td>@compra.IdCompra</td>
-                    <td>@(compra.Fecha?.ToString("yyyy-MM-dd") ?? "N/A")</td>
-                    <td>@(compra.IdProveedorNavigation?.Nombre ?? "N/A")</td>
-                    <td>@compra.MetodoPago</td>
-                    <td>$@compra.Total.ToString("N2")</td>
-                    <td>
-                        <a asp-action="DetalleFactura" asp-route-id="@compra.IdCompra" class="btn btn-sm btn-info">Ver Detalle</a>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
-else if (Model.FechaInicio.HasValue || Model.FechaFin.HasValue || Model.IdProveedor.HasValue)
-{
-    <div class="alert alert-warning mt-4">
-        <i class="fas fa-exclamation-triangle"></i> No se encontraron compras finalizadas para los filtros especificados.
-    </div>
-}
-
+</div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    <script>
+        try {
+            const datosGraficoJson = '@Html.Raw(datosGraficoJson)';
+            const datos = JSON.parse(datosGraficoJson);
 
-    @if (ViewBag.DatosGraficoJson != null)
-    {
-        <script>
-            // 1. Obtener los datos JSON de C#
-            var dataJson = '@Html.Raw(ViewBag.DatosGraficoJson)';
-            var dataGrafico = JSON.parse(dataJson);
+            if (datos && datos.length > 0) {
+                const etiquetas = datos.map(d => d.Etiqueta);
+                const valores = datos.map(d => d.Valor);
 
-            // 2. Preparar datos para Chart.js
-            var etiquetas = dataGrafico.map(d => d.Etiqueta);
-            var valores = dataGrafico.map(d => d.Valor);
+                // Colores adaptados para Compras
+                const colores = [
+                    'rgba(255, 99, 132, 0.6)',
+                    'rgba(54, 162, 235, 0.6)',
+                    'rgba(255, 206, 86, 0.6)',
+                    'rgba(75, 192, 192, 0.6)',
+                    'rgba(153, 102, 255, 0.6)',
+                    'rgba(255, 159, 64, 0.6)'
+                ];
 
-            // Colores adaptados para Compras/Gastos (Rojos/Anaranjados)
-            const colores = [
-                'rgba(255, 99, 132, 0.6)',
-                'rgba(255, 159, 64, 0.6)',
-                'rgba(255, 205, 86, 0.6)',
-                'rgba(75, 192, 192, 0.6)',
-                'rgba(153, 102, 255, 0.6)',
-                'rgba(54, 162, 235, 0.6)'
-            ];
+                // Dibujar el Gráfico de Barras
+                const ctx = document.getElementById('graficoCompras');
 
-            // 3. Dibujar el Gráfico de Barras
-            const ctx = document.getElementById('graficoCompras');
-
-            new Chart(ctx, {
-                type: 'bar', // Tipo de gráfico: barras
-                data: {
-                    labels: etiquetas,
-                    datasets: [{
-                        label: 'Gasto Total ($)',
-                        data: valores,
-                        backgroundColor: colores.slice(0, etiquetas.length),
-                        borderColor: colores.slice(0, etiquetas.length).map(c => c.replace('0.6', '1')),
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { display: false },
-                        title: {
-                            display: true,
-                            text: 'Total de Gasto por Proveedor Seleccionado'
-                        }
+                new Chart(ctx, {
+                    type: 'bar', // Tipo de gráfico: barras
+                    data: {
+                        labels: etiquetas,
+                        datasets: [{
+                            label: 'Gasto Total ($)',
+                            data: valores,
+                            backgroundColor: colores.slice(0, etiquetas.length),
+                            borderColor: colores.slice(0, etiquetas.length).map(c => c.replace('0.6', '1')),
+                            borderWidth: 1
+                        }]
                     },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { display: false },
                             title: {
                                 display: true,
-                                text: 'Monto Total ($)'
+                                text: 'Total de Gasto por Proveedor'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Monto Total ($)'
+                                }
                             }
                         }
                     }
-                }
-            });
-        </script>
-    }
+                });
+            }
+        } catch (e) {
+             console.error("Error al parsear datos del gráfico:", e);
+        }
+    </script>
 }

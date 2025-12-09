@@ -19,9 +19,9 @@ namespace SIJUPAY.Controllers
         // GET: Ventas/Index (Página principal/Historial)
         public async Task<IActionResult> Index()
         {
-            
-            var ventasFinalizadas = await _context.Venta 
-                .Include(v => v.IdClienteNavigation)    
+
+            var ventasFinalizadas = await _context.Venta
+                .Include(v => v.IdClienteNavigation)
                 .Where(v => v.Observaciones == "FINALIZADA")
                 .OrderByDescending(v => v.Fecha)
                 .ToListAsync();
@@ -29,30 +29,42 @@ namespace SIJUPAY.Controllers
             return View(ventasFinalizadas);
         }
 
-        
+
         public async Task<IActionResult> Crear()
         {
-            
+
+            Logica.Logica_Usuarios logicaUsuario = new Logica.Logica_Usuarios();
+
+            string telefonoUsuario = HttpContext.User.Claims
+                .FirstOrDefault(c => c.Type == "Telefono")?.Value;
+
+            Usuario usuarioLogueado = logicaUsuario.obtenerUsuarioPorTelefono(telefonoUsuario);
+
             var productos = await _context.Productos
                 .Where(p => p.Stock > 0 && p.Estado == true)
                 .ToListAsync();
 
-            
             var modelo = new VentaViewModel
             {
-                IdCliente = 3, 
+                IdCliente = usuarioLogueado.IdUsuario,
+
                 ItemsCatalogo = productos.Select(p => new VentaCatalogoItemViewModel
                 {
                     IdProducto = p.IdProducto,
                     Nombre = p.Nombre,
-                    Precio = p.Precio, 
+                    Precio = p.Precio,
                     Stock = p.Stock,
                     ImagenUrl = p.Foto != null
-                        ? Convert.ToBase64String(p.Foto) 
-                        : null,
-                    CantidadAComprar = 0 
+                        ? Convert.ToBase64String(p.Foto)
+                        : null
                 }).ToList()
             };
+
+            if (modelo.IdCliente == 0)
+            {
+                TempData["Error"] = "Error: No se pudo identificar al cliente para realizar la venta.";
+                return RedirectToAction("Index", "Productos");
+            }
 
             return View(modelo);
         }
@@ -61,14 +73,14 @@ namespace SIJUPAY.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RegistrarVenta(VentaViewModel model)
         {
-            
+
             var detallesValidos = model.ItemsCatalogo
-                .Where(d => d.CantidadAComprar > 0 && d.CantidadAComprar <= d.Stock) 
+                .Where(d => d.CantidadAComprar > 0 && d.CantidadAComprar <= d.Stock)
                 .ToList();
 
             if (!ModelState.IsValid || !detallesValidos.Any())
             {
-                
+
                 TempData["Error"] = "Debe seleccionar al menos un producto con una cantidad válida que no exceda el stock.";
                 return RedirectToAction(nameof(Crear));
             }
@@ -77,7 +89,7 @@ namespace SIJUPAY.Controllers
             {
                 try
                 {
-                    
+
                     var venta = new Venta
                     {
                         Fecha = DateTime.Now,
@@ -91,10 +103,10 @@ namespace SIJUPAY.Controllers
 
                     var idNuevaVenta = venta.IdVenta;
 
-                    
+
                     foreach (var item in detallesValidos)
                     {
-                        
+
                         var detalle = new VentaDetalle
                         {
                             IdVenta = idNuevaVenta,
@@ -104,19 +116,19 @@ namespace SIJUPAY.Controllers
                         };
                         _context.VentaDetalles.Add(detalle);
 
-                        
+
                         var productoEnDB = await _context.Productos.FindAsync(item.IdProducto);
                         productoEnDB.Stock -= item.CantidadAComprar;
                         _context.Productos.Update(productoEnDB);
 
-                        
+
                         var movimiento = new InventarioMovimiento
                         {
                             IdProducto = item.IdProducto,
                             Cantidad = item.CantidadAComprar,
-                            TipoMovimiento = "Salida", 
+                            TipoMovimiento = "Salida",
                             Fecha = DateTime.Now,
-                            IdUsuario = venta.IdCliente, 
+                            IdUsuario = venta.IdCliente,
                             Referencia = $"Venta ID {idNuevaVenta}",
                             Observaciones = "Venta Directa"
                         };
@@ -139,7 +151,7 @@ namespace SIJUPAY.Controllers
         }
 
 
-        
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AgregarAlCarritoVenta(int idProducto, int cantidad, int idCliente)
@@ -187,7 +199,7 @@ namespace SIJUPAY.Controllers
                             IdVenta = venta.IdVenta,
                             IdProducto = idProducto,
                             Cantidad = cantidad,
-                            
+
                             PrecioUnitario = producto.Precio
                         };
                         _context.VentaDetalles.Add(detalle);
@@ -207,7 +219,7 @@ namespace SIJUPAY.Controllers
             return RedirectToAction(nameof(Crear));
         }
 
-       
+
         public async Task<IActionResult> PagarCarrito(int idVenta)
         {
             var venta = await _context.Venta
@@ -222,7 +234,7 @@ namespace SIJUPAY.Controllers
                 return RedirectToAction(nameof(Crear));
             }
 
-            
+
             decimal totalCalculado = venta.VentaDetalles.Sum(d => d.Cantidad * d.PrecioUnitario);
 
             ViewBag.TotalVenta = totalCalculado;
@@ -231,7 +243,7 @@ namespace SIJUPAY.Controllers
             return View(venta);
         }
 
-        
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> FinalizarVenta(int idVenta, string metodoDePago)
@@ -257,7 +269,7 @@ namespace SIJUPAY.Controllers
                     {
                         var producto = await _context.Productos.FindAsync(detalle.IdProducto);
 
-                        
+
                         if (producto.Stock < detalle.Cantidad)
                         {
                             throw new InvalidOperationException($"Stock insuficiente para {producto.Nombre}. Solo quedan {producto.Stock}.");
@@ -266,7 +278,7 @@ namespace SIJUPAY.Controllers
                         producto.Stock -= detalle.Cantidad;
                         _context.Productos.Update(producto);
 
-                        
+
                         var movimiento = new InventarioMovimiento
                         {
                             IdProducto = detalle.IdProducto,
@@ -283,7 +295,7 @@ namespace SIJUPAY.Controllers
                         totalCalculado += detalle.Cantidad * detalle.PrecioUnitario;
                     }
 
-                    
+
                     venta.Fecha = DateTime.Now;
                     venta.Total = totalCalculado;
                     venta.Observaciones = "FINALIZADA";
@@ -300,13 +312,13 @@ namespace SIJUPAY.Controllers
                 {
                     await transaction.RollbackAsync();
                     TempData["Error"] = ex.Message;
-                    
+
                     return RedirectToAction(nameof(PagarCarrito), new { idVenta = idVenta });
                 }
             }
         }
 
-       
+
         public async Task<IActionResult> DetalleFactura(int id)
         {
             if (id == 0) return NotFound();
@@ -326,61 +338,76 @@ namespace SIJUPAY.Controllers
 
             return View(venta);
         }
-
+        [Authorize(Roles = "Administrador")]
         [HttpGet]
         public async Task<IActionResult> Reporte()
         {
+            ViewBag.Categorias = await _context.Categoria
+        .Where(c => c.Estado == true)
+        .Select(c => new { c.IdCategoria, c.Nombre })
+        .ToListAsync();
+
             var model = new ReporteVentasViewModel
             {
-                ListaCategorias = await _context.Categoria.Where(c => c.Estado == true).ToListAsync()
+                FechaInicio = DateTime.Today.AddMonths(-1),
+                FechaFin = DateTime.Today,
+                ResultadosVentas = new List<Venta>() // La lista debe ser inicializada
             };
+
+            ViewBag.DatosGraficoJson = "[]";
             return View(model);
         }
+        [Authorize(Roles = "Administrador")]
 
         [HttpPost]
         public async Task<IActionResult> Reporte(ReporteVentasViewModel model)
         {
-            
+
             model.ListaCategorias = await _context.Categoria.Where(c => c.Estado == true).ToListAsync();
 
-            
-            DateTime fechaInicio = model.FechaInicio ?? DateTime.MinValue;
-            DateTime fechaFin = model.FechaFin?.AddDays(1) ?? DateTime.MaxValue;
 
-            
+            DateTime fechaInicio = model.FechaInicio ?? new DateTime(1753, 1, 1);
+            DateTime fechaFin = model.FechaFin?.AddDays(1) ?? new DateTime(9999, 12, 31);
+
+
             var query = _context.Venta
                 .Include(v => v.IdClienteNavigation)
                 .Include(v => v.VentaDetalles)
-                    .ThenInclude(vd => vd.IdProductoNavigation) 
+                    .ThenInclude(vd => vd.IdProductoNavigation)
                 .Where(v => v.Fecha >= fechaInicio &&
                             v.Fecha < fechaFin &&
                             v.Observaciones == "FINALIZADA")
                 .AsQueryable();
 
-            
+
             if (model.IdCategoria.HasValue && model.IdCategoria.Value > 0)
             {
-                
+
                 query = query.Where(v => v.VentaDetalles.Any(vd =>
                     vd.IdProductoNavigation.IdCategoria == model.IdCategoria.Value));
             }
 
-            
+
             var ventas = await query.OrderByDescending(v => v.Fecha).ToListAsync();
 
             var dataGrafico = ventas
-            .SelectMany(v => v.VentaDetalles) 
-            .GroupBy(vd => vd.IdProductoNavigation.IdCategoriaNavigation.Nombre) 
+            .SelectMany(v => v.VentaDetalles)
+            .GroupBy(vd => vd.IdProductoNavigation.IdCategoriaNavigation.Nombre)
             .Select(g => new GraficoDataViewModel
             {
-                Etiqueta = g.Key, 
-                Valor = g.Sum(vd => vd.Cantidad * vd.PrecioUnitario) 
+                Etiqueta = g.Key,
+                Valor = g.Sum(vd => vd.Cantidad * vd.PrecioUnitario)
             })
             .OrderByDescending(d => d.Valor)
             .ToList();
 
             model.ResultadosVentas = ventas;
             model.TotalVentas = ventas.Sum(v => v.Total);
+
+            ViewBag.Categorias = await _context.Categoria
+        .Where(c => c.Estado == true)
+        .Select(c => new { c.IdCategoria, c.Nombre })
+        .ToListAsync();
 
             ViewBag.DatosGraficoJson = Newtonsoft.Json.JsonConvert.SerializeObject(dataGrafico);
             return View(model);
