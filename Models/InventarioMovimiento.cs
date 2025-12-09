@@ -15,6 +15,8 @@ public partial class InventarioMovimiento
 
     public int IdUsuario { get; set; }
 
+    public string? Referencia { get; set; } 
+    public string? Observaciones { get; set; }
     public string TipoMovimiento { get; set; } = null!;
 
     public virtual Producto IdProductoNavigation { get; set; } = null!;

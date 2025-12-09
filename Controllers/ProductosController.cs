@@ -1,16 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http; 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using SIJUPAY.Models;
-using Microsoft.AspNetCore.Http; 
+using System;
+using System.Collections.Generic;
 using System.IO; 
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace SIJUPAY.Controllers
 {
+    [Authorize]
     public class ProductosController : Controller
     {
         private readonly BDSijuPayContext _context;
@@ -21,10 +23,21 @@ namespace SIJUPAY.Controllers
         }
 
         // GET: Productos
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string search, int? categoria)
         {
-            var bDSijuPayContext = _context.Productos.Include(p => p.IdCategoriaNavigation);
-            return View(await bDSijuPayContext.ToListAsync());
+            var query = _context.Productos.AsQueryable();
+
+            if (!string.IsNullOrEmpty(search))
+                query = query.Where(p => p.Nombre.Contains(search));
+
+            if (categoria.HasValue)
+                query = query.Where(p => p.IdCategoria == categoria.Value);
+
+            ViewBag.Categorias = new SelectList(_context.Categoria, "IdCategoria", "Nombre");
+            ViewBag.Search = search;
+            ViewBag.Categoria = categoria;
+
+            return View(await query.ToListAsync());
         }
 
         // GET: Productos/Details/5
@@ -62,27 +75,26 @@ namespace SIJUPAY.Controllers
         {
             if (ModelState.IsValid)
             {
-                // 1. Lógica para manejar y guardar la imagen (Binario)
+               
                 if (fotoCargada != null && fotoCargada.Length > 0)
                 {
                     using (var memoryStream = new MemoryStream())
                     {
                         await fotoCargada.CopyToAsync(memoryStream);
-                        producto.Foto = memoryStream.ToArray(); // Convierte y asigna el binario
+                        producto.Foto = memoryStream.ToArray(); 
                     }
                 }
 
-                // 2. LÓGICA DE ESTADO: Se asigna el estado basado en el Stock (CRÍTICO)
-                // Si el stock es mayor que cero, el estado es true (Activo), si es cero, es false (Inactivo).
+               
                 producto.Estado = (producto.Stock > 0);
 
-                // 3. Guardar el producto
+               
                 _context.Add(producto);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
 
-            // Si la validación falla, recargar la lista de categorías usando el NOMBRE
+            
             ViewData["IdCategoria"] = new SelectList(_context.Categoria, "IdCategoria", "Nombre", producto.IdCategoria);
             return View(producto);
         }
@@ -109,36 +121,54 @@ namespace SIJUPAY.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("IdProducto,Nombre,Foto,Precio,Descripcion,IdCategoria,Estado,Stock")] Producto producto)
+        public async Task<IActionResult> Edit(int id, Producto producto, IFormFile? fotoCargada)
         {
             if (id != producto.IdProducto)
-            {
                 return NotFound();
-            }
 
             if (ModelState.IsValid)
             {
                 try
                 {
-                    _context.Update(producto);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!ProductoExists(producto.IdProducto))
-                    {
+                    
+                    var productoDb = await _context.Productos.FirstOrDefaultAsync(p => p.IdProducto == id);
+                    if (productoDb == null)
                         return NotFound();
-                    }
-                    else
+
+                    
+                    productoDb.Nombre = producto.Nombre;
+                    productoDb.Precio = producto.Precio;
+                    productoDb.Descripcion = producto.Descripcion;
+                    productoDb.Stock = producto.Stock;
+                    productoDb.IdCategoria = producto.IdCategoria;
+                    productoDb.Estado = producto.Stock > 0;
+                    productoDb.Estado = producto.Estado;
+
+                    
+                    if (fotoCargada != null && fotoCargada.Length > 0)
                     {
-                        throw;
+                        using (var memoryStream = new MemoryStream())
+                        {
+                            await fotoCargada.CopyToAsync(memoryStream);
+                            productoDb.Foto = memoryStream.ToArray();
+                        }
                     }
+
+                    
+                    await _context.SaveChangesAsync();
+
+                    return RedirectToAction(nameof(Index));
                 }
-                return RedirectToAction(nameof(Index));
+                catch
+                {
+                    throw;
+                }
             }
+
             ViewData["IdCategoria"] = new SelectList(_context.Categoria, "IdCategoria", "Nombre", producto.IdCategoria);
             return View(producto);
         }
+
 
         // GET: Productos/Delete/5
         public async Task<IActionResult> Delete(int? id)

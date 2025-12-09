@@ -1,32 +1,32 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using SIJUPAY.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace SIJUPAY.Controllers
 {
     [Authorize]
-    public class CategoriasController : Controller
+    public class UsuariosController : Controller
     {
         private readonly BDSijuPayContext _context;
 
-        public CategoriasController(BDSijuPayContext context)
+        public UsuariosController(BDSijuPayContext context)
         {
             _context = context;
         }
 
-        // GET: Categorias
+        // GET: Usuarios
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Categoria.ToListAsync());
+            return View(await _context.Usuarios.ToListAsync());
         }
 
-        // GET: Categorias/Details/5
+        // GET: Usuarios/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -34,39 +34,39 @@ namespace SIJUPAY.Controllers
                 return NotFound();
             }
 
-            var categoria = await _context.Categoria
-                .FirstOrDefaultAsync(m => m.IdCategoria == id);
-            if (categoria == null)
+            var usuario = await _context.Usuarios
+                .FirstOrDefaultAsync(m => m.IdUsuario == id);
+            if (usuario == null)
             {
                 return NotFound();
             }
 
-            return View(categoria);
+            return View(usuario);
         }
 
-        // GET: Categorias/Create
+        // GET: Usuarios/Create
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Categorias/Create
+        // POST: Usuarios/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("IdCategoria,Nombre,Descripcion,Estado")] Categoria categoria)
+        public async Task<IActionResult> Create([Bind("IdUsuario,Nombre,Apellido,Contrasena,Telefono,TipoUsuario")] Usuario usuario)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(categoria);
+                _context.Add(usuario);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            return View(categoria);
+            return View(usuario);
         }
 
-        // GET: Categorias/Edit/5
+        // GET: Usuarios/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -74,22 +74,22 @@ namespace SIJUPAY.Controllers
                 return NotFound();
             }
 
-            var categoria = await _context.Categoria.FindAsync(id);
-            if (categoria == null)
+            var usuario = await _context.Usuarios.FindAsync(id);
+            if (usuario == null)
             {
                 return NotFound();
             }
-            return View(categoria);
+            return View(usuario);
         }
 
-        // POST: Categorias/Edit/5
+        // POST: Usuarios/Edit/5
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("IdCategoria,Nombre,Descripcion,Estado")] Categoria categoria)
+        public async Task<IActionResult> Edit(int id, [Bind("IdUsuario,Nombre,Apellido,Contrasena,Telefono,TipoUsuario")] Usuario usuario)
         {
-            if (id != categoria.IdCategoria)
+            if (id != usuario.IdUsuario)
             {
                 return NotFound();
             }
@@ -98,12 +98,12 @@ namespace SIJUPAY.Controllers
             {
                 try
                 {
-                    _context.Update(categoria);
+                    _context.Update(usuario);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!CategoriaExists(categoria.IdCategoria))
+                    if (!UsuarioExists(usuario.IdUsuario))
                     {
                         return NotFound();
                     }
@@ -114,10 +114,10 @@ namespace SIJUPAY.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(categoria);
+            return View(usuario);
         }
 
-        // GET: Categorias/Delete/5
+        // GET: Usuarios/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -125,34 +125,34 @@ namespace SIJUPAY.Controllers
                 return NotFound();
             }
 
-            var categoria = await _context.Categoria
-                .FirstOrDefaultAsync(m => m.IdCategoria == id);
-            if (categoria == null)
+            var usuario = await _context.Usuarios
+                .FirstOrDefaultAsync(m => m.IdUsuario == id);
+            if (usuario == null)
             {
                 return NotFound();
             }
 
-            return View(categoria);
+            return View(usuario);
         }
 
-        // POST: Categorias/Delete/5
+        // POST: Usuarios/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var categoria = await _context.Categoria.FindAsync(id);
-            if (categoria != null)
+            var usuario = await _context.Usuarios.FindAsync(id);
+            if (usuario != null)
             {
-                _context.Categoria.Remove(categoria);
+                _context.Usuarios.Remove(usuario);
             }
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        private bool CategoriaExists(int id)
+        private bool UsuarioExists(int id)
         {
-            return _context.Categoria.Any(e => e.IdCategoria == id);
+            return _context.Usuarios.Any(e => e.IdUsuario == id);
         }
     }
 }

@@ -13,7 +13,8 @@ public partial class Venta
 
     public decimal Total { get; set; }
 
-    public string MetodoPago { get; set; } = null!;
+    public string? MetodoPago { get; set; }
+    public string? Observaciones { get; set; }
 
     public virtual Usuario IdClienteNavigation { get; set; } = null!;
 

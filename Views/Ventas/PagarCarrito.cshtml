@@ -1,0 +1,81 @@
+﻿@model SIJUPAY.Models.Venta
+
+@{
+    ViewData["Title"] = "Finalizar Venta | Carrito";
+    // Obtenemos el total de ViewBag, calculado en el controlador
+    var total = ViewBag.TotalVenta;
+}
+
+<div class="container my-5">
+    <h1 class="text-success">✅ Finalizar Venta: Carrito</h1>
+    <p>Revisa tu orden y selecciona el método de pago antes de confirmar la venta.</p>
+    <hr />
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h5>**Detalles del Cliente**</h5>
+            <p class="mb-1">
+                **Nombre:** @Model.IdClienteNavigation.Nombre @Model.IdClienteNavigation.Apellido
+            </p>
+            <p class="mb-1">
+                **Teléfono:** @Model.IdClienteNavigation.Telefono
+            </p>
+        </div>
+    </div>
+
+    <h5>**Productos en el Carrito**</h5>
+    <table class="table table-bordered table-striped mt-3">
+        <thead class="bg-light">
+            <tr>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Precio Unitario</th>
+                <th>Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var detalle in Model.VentaDetalles)
+            {
+                <tr>
+                    <td>@detalle.IdProductoNavigation.Nombre</td>
+                    <td>@detalle.Cantidad</td>
+                    <td>@detalle.PrecioUnitario.ToString("C")</td>
+                    <td>@(detalle.Cantidad* detalle.PrecioUnitario).ToString("C")</td>
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            <tr class="table-success">
+                <td colspan="3" class="text-end">**TOTAL A PAGAR**</td>
+                <td>**@total.ToString("C")**</td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <form asp-action="FinalizarVenta" method="post">
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <label for="metodoDePago" class="form-label">**Seleccionar Método de Pago**</label>
+                <select id="metodoDePago" name="metodoDePago" class="form-control" required>
+                    <option value="">-- Seleccione uno --</option>
+                    <option value="Efectivo">Efectivo</option>
+                    <option value="Transferencia">Transferencia Bancaria</option>
+                    <option value="Credito">Tarjeta de Crédito/Débito</option>
+                    
+                </select>
+            </div>
+        </div>
+
+        <input type="hidden" name="idVenta" value="@ViewBag.IdVentaPendiente" />
+
+        <div class="d-flex justify-content-between pt-4">
+            <a asp-action="Crear" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver al Catálogo
+            </a>
+            <button type="submit" class="btn btn-success btn-lg">
+                <i class="fas fa-dollar-sign"></i> Finalizar y Cobrar Venta
+            </button>
+        </div>
+    </form>
+</div>

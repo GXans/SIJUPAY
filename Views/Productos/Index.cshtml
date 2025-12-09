@@ -4,75 +4,81 @@
     ViewData["Title"] = "Inventario de Productos";
 }
 
-<h1>Inventario de Productos</h1>
+<h1 class="mb-4">Inventario de Productos</h1>
+<form asp-action="Index" method="get" class="row mb-3">
+    <div class="col-md-4">
+        <input type="text" name="search" class="form-control"
+               placeholder="Buscar..." value="@ViewBag.Search" />
+    </div>
+
+    <div class="col-md-4">
+        <select name="categoria" class="form-control" asp-items="ViewBag.Categorias">
+            <option value="">-- Todas las categorías --</option>
+        </select>
+    </div>
+
+    <div class="col-md-4">
+        <button class="btn btn-primary w-100">Filtrar</button>
+    </div>
+</form>
 
 <p>
-    <a asp-action="Create" class="btn btn-success">Crear Nuevo Producto</a>
+    <a asp-action="Create" class="btn btn-success mb-4">Crear Nuevo Producto</a>
 </p>
-<table class="table table-striped table-hover">
-    <thead>
-        <tr>
-            <th>@Html.DisplayNameFor(model => model.Nombre)</th>
-            <th>@Html.DisplayNameFor(model => model.Foto)</th>
-            <th>@Html.DisplayNameFor(model => model.Precio)</th>
-            <th>@Html.DisplayNameFor(model => model.Descripcion)</th>
-            <th>@Html.DisplayNameFor(model => model.Estado)</th>
-            <th>@Html.DisplayNameFor(model => model.Stock)</th>
-            <th>Categoría</th>
-            <th>Acciones</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
-        {
-            <tr>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Nombre)
-                </td>
-                <td>
-                    @* CAMBIO 1: Mostrar la Foto binaria como imagen Base64 *@
-                    @if (item.Foto != null && item.Foto.Length > 0)
-                    {
-                        var base64 = Convert.ToBase64String(item.Foto);
-                        var imgsrc = string.Format("data:image/gif;base64,{0}", base64);
-                        <img src="@imgsrc" style="max-height: 50px; max-width: 50px;" alt="@item.Nombre" />
-                    }
-                    else
-                    {
-                        <span>(Sin Foto)</span>
-                    }
-                </td>
-                <td>
-                    @* CAMBIO 2: Mostrar el Precio con formato de moneda "C" (ej. $1,500.00) *@
-                    @Html.DisplayFor(modelItem => item.Precio, "C")
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Descripcion)
-                </td>
-                <td>
-                    @* CAMBIO 3: Mostrar el Estado con un texto amigable y color basado en el booleano *@
-                    @if (item.Estado == true)
-                    {
-                        <span class="badge bg-success">Activo</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-danger">Inactivo</span>
-                    }
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Stock)
-                </td>
-                <td>
-                    @* CAMBIO 4: Mostrar el NOMBRE de la categoría *@
-                    @Html.DisplayFor(modelItem => item.IdCategoriaNavigation.Nombre)
-                </td>
-                <td>
-                    <a asp-action="Edit" asp-route-id="@item.IdProducto">Editar</a> |
-                    <a asp-action="Details" asp-route-id="@item.IdProducto">Detalles</a> |
-                    <a asp-action="Delete" asp-route-id="@item.IdProducto">Eliminar</a>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+
+<div class="row row-cols-1 row-cols-md-3 g-4">
+    @foreach (var item in Model)
+    {
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+
+                
+                @if (item.Foto != null && item.Foto.Length > 0)
+                {
+                    var base64 = Convert.ToBase64String(item.Foto);
+                    var imgsrc = $"data:image/png;base64,{base64}";
+                    <img src="@imgsrc" class="card-img-top" style="height: 220px; object-fit: cover;" />
+                }
+                else
+                {
+                    <div class="d-flex align-items-center justify-content-center bg-light"
+                         style="height: 220px;">
+                        <span class="text-muted">Sin Foto</span>
+                    </div>
+                }
+
+                <div class="card-body">
+                    <h5 class="card-title">@item.Nombre</h5>
+
+                    <p class="card-text">
+                        <strong>Precio:</strong> @item.Precio.ToString("C") <br />
+
+                        <strong>Categoría:</strong> @item.IdCategoriaNavigation.Nombre <br />
+
+                        <strong>Stock:</strong> @item.Stock <br />
+
+                        <strong>Estado:</strong>
+                        @if (item.Estado == true)
+                        {
+                            <span class="badge bg-success">Activo</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger">Inactivo</span>
+                        }
+                    </p>
+                </div>
+
+                
+                <div class="card-footer bg-white">
+                    <div class="d-flex justify-content-between">
+                        <a asp-action="Edit" asp-route-id="@item.IdProducto" class="btn btn-primary btn-sm">Editar</a>
+                        <a asp-action="Details" asp-route-id="@item.IdProducto" class="btn btn-info btn-sm text-white">Detalles</a>
+                        <a asp-action="Delete" asp-route-id="@item.IdProducto" class="btn btn-danger btn-sm">Eliminar</a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    }
+</div>
