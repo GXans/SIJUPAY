@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using SIJUPAY.Models;
 using SIJUPAY.Models.ViewModels;
 using System.Linq;
@@ -21,25 +22,24 @@ namespace SIJUPAY.Controllers
         // GET: Compras/Index (Página principal/Historial)
         public async Task<IActionResult> Index()
         {
-            // Obtener todas las compras que ya fueron finalizadas.
             var comprasFinalizadas = await _context.Compras
-                .Include(c => c.IdProveedorNavigation) // Para mostrar el nombre del usuario/proveedor
+                .Include(c => c.IdProveedorNavigation) 
                 .Where(c => c.Observaciones != "EN_CARRITO")
                 .OrderByDescending(c => c.Fecha)
                 .ToListAsync();
 
             return View(comprasFinalizadas);
         }
-        // GET: Compras/Crear (Muestra el formulario)
+        
         public async Task<IActionResult> Crear()
         {
-            // 1. Cargamos el catálogo de productos
+            
             var productos = await _context.Productos
-                .Include(p => p.IdCategoriaNavigation) // O cualquier otra inclusión que necesites
+                .Include(p => p.IdCategoriaNavigation) 
                 .ToListAsync();
 
-            // 2. Enviamos la lista de productos (IEnumerable<Producto>) como el MODELO
-            return View(productos); // <--- SOLUCIÓN: Enviamos la lista 'productos'
+            
+            return View(productos); 
         }
 
         // POST: Compras/RegistrarCompra (Procesa el formulario)
@@ -275,25 +275,22 @@ namespace SIJUPAY.Controllers
                 }
                 catch (Exception ex)
                 {
-                    // Si la transacción ya se completó (commit fue exitoso), el Rollback lanzará InvalidOperationException.
-                    // Es seguro atrapar el error de Rollback aquí, pero es mejor solo intentar el Rollback.
-                    try
+                    try
                     {
                         await transaction.RollbackAsync();
                     }
-                    catch (InvalidOperationException)
-                    {
-                        // Ignoramos la excepción si la transacción ya se completó.
-                    }
+                    catch (InvalidOperationException) {  }
 
-                    // Aquí puedes registrar 'ex'
-                    throw; // Lanza la excepción original para el Developer Page
+                   
+                    TempData["Error"] = $"Ocurrió un error al finalizar la compra: {ex.Message}";
+
+                    return RedirectToAction(nameof(PagarCarrito));
                 }
 
             }
         }
 
-        // GET: Compras/DetalleFactura/{id}
+        
         public async Task<IActionResult> DetalleFactura(int id)
         {
             if (id == 0)
@@ -301,11 +298,11 @@ namespace SIJUPAY.Controllers
                 return NotFound();
             }
 
-            // Buscamos la compra con todos sus detalles y relaciones necesarias (Producto y Usuario/Proveedor)
+            
             var compra = await _context.Compras
                 .Include(c => c.CompraDetalles)
-                    .ThenInclude(cd => cd.IdProductoNavigation) // Para obtener el nombre y precio del producto
-                .Include(c => c.IdProveedorNavigation) // Asumimos que IdProveedorNavigation es el Usuario
+                    .ThenInclude(cd => cd.IdProductoNavigation) 
+                .Include(c => c.IdProveedorNavigation) 
                 .FirstOrDefaultAsync(m => m.IdCompra == id);
 
             if (compra == null)
@@ -313,14 +310,81 @@ namespace SIJUPAY.Controllers
                 return NotFound();
             }
 
-            // Aseguramos que la factura se pueda ver solo si está FINALIZADA (opcional)
+            
             if (compra.Observaciones == "EN_CARRITO")
             {
                 return BadRequest("Esta compra aún no ha sido finalizada.");
             }
 
-            // Usaremos el objeto Compra directamente como modelo para la vista.
+            
             return View(compra);
         }
+
+        
+        [HttpGet]
+        public async Task<IActionResult> Reporte()
+        {
+            var model = new ReporteComprasViewModel
+            {
+                
+                ListaProveedores = await _context.Usuarios
+                    .Where(u => u.TipoUsuario == "Proveedor")
+                    .OrderBy(u => u.Nombre)
+                    .ToListAsync()
+            };
+            return View(model);
+        }
+
+        
+        [HttpPost]
+        public async Task<IActionResult> Reporte(ReporteComprasViewModel model)
+        {
+            
+            model.ListaProveedores = await _context.Usuarios
+                .Where(u => u.TipoUsuario == "Proveedor")
+                .OrderBy(u => u.Nombre)
+                .ToListAsync();
+
+            
+            DateTime fechaInicio = model.FechaInicio ?? DateTime.MinValue;
+            DateTime fechaFin = model.FechaFin?.AddDays(1) ?? DateTime.MaxValue;
+
+            
+            var query = _context.Compras 
+                .Include(c => c.IdProveedorNavigation)
+                .Where(c => c.Fecha >= fechaInicio &&
+                            c.Fecha < fechaFin &&
+                            c.Observaciones == "FINALIZADA") 
+                .AsQueryable();
+
+           
+            if (model.IdProveedor.HasValue && model.IdProveedor.Value > 0)
+            {
+                query = query.Where(c => c.IdProveedor == model.IdProveedor.Value);
+            }
+
+            
+            var compras = await query.OrderByDescending(c => c.Fecha).ToListAsync();
+
+            
+            model.ResultadosCompras = compras;
+            model.TotalCompras = compras.Sum(c => c.Total);
+
+            
+            var dataGrafico = compras
+                .GroupBy(c => c.IdProveedorNavigation.Nombre)
+                .Select(g => new GraficoDataViewModel
+                {
+                    Etiqueta = g.Key, 
+                    Valor = g.Sum(c => c.Total) 
+                })
+                .OrderByDescending(d => d.Valor)
+                .ToList();
+
+            ViewBag.DatosGraficoJson = JsonConvert.SerializeObject(dataGrafico);
+
+            return View(model);
+        }
+
     }
 }

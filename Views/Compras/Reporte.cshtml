@@ -1,0 +1,165 @@
+﻿@model SIJUPAY.Models.ViewModels.ReporteComprasViewModel
+@using Microsoft.AspNetCore.Mvc.Rendering
+@using SIJUPAY.Models.ViewModels
+
+@{
+    ViewData["Title"] = "Informe de Compras y Gastos";
+}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<h1>Informe de Compras y Gastos </h1>
+
+<hr />
+
+<form asp-action="Reporte" method="post" class="mb-4 p-4 border rounded shadow-sm bg-light">
+    <div class="row">
+
+        <div class="col-md-4">
+            <div class="form-group">
+                <label asp-for="IdProveedor" class="font-weight-bold">Proveedor:</label>
+                <select asp-for="IdProveedor" class="form-control"
+                        asp-items="@(new SelectList(Model.ListaProveedores, "IdUsuario", "Nombre"))">
+                    <option value="">-- Todos los Proveedores --</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="form-group">
+                <label asp-for="FechaInicio" class="font-weight-bold">Fecha de Inicio:</label>
+                <input asp-for="FechaInicio" type="date" class="form-control" />
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="form-group">
+                <label asp-for="FechaFin" class="font-weight-bold">Fecha de Fin:</label>
+                <input asp-for="FechaFin" type="date" class="form-control" />
+            </div>
+        </div>
+
+        <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-warning btn-block text-white">
+                <i class="fas fa-search"></i> Generar
+            </button>
+        </div>
+    </div>
+</form>
+
+@if (Model.ResultadosCompras != null && Model.ResultadosCompras.Any())
+{
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="mb-3"style="text-align:center">Resultados</h3>
+            <p class="h4 text-danger" style="text-align:center">Total neto de compras en el rango de fechas: $@Model.TotalCompras.ToString("N2")</p>
+        </div>
+    </div>
+
+    <h3 class="mt-4" style="text-align:center">Gráfico de Gasto por Proveedor</h3>
+    <div class="card p-3 mb-5 shadow">
+        <canvas id="graficoCompras" style="max-height: 400px;"></canvas>
+    </div>
+
+    <h3 class="mt-4">Detalle de Compras</h3>
+    <table class="table table-striped table-hover">
+        <thead class="thead-dark">
+            <tr>
+                <th>ID Compra</th>
+                <th>Fecha</th>
+                <th>Proveedor</th>
+                <th>Método Pago</th>
+                <th>Total</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var compra in Model.ResultadosCompras)
+            {
+                <tr>
+                    <td>@compra.IdCompra</td>
+                    <td>@(compra.Fecha?.ToString("yyyy-MM-dd") ?? "N/A")</td>
+                    <td>@(compra.IdProveedorNavigation?.Nombre ?? "N/A")</td>
+                    <td>@compra.MetodoPago</td>
+                    <td>$@compra.Total.ToString("N2")</td>
+                    <td>
+                        <a asp-action="DetalleFactura" asp-route-id="@compra.IdCompra" class="btn btn-sm btn-info">Ver Detalle</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else if (Model.FechaInicio.HasValue || Model.FechaFin.HasValue || Model.IdProveedor.HasValue)
+{
+    <div class="alert alert-warning mt-4">
+        <i class="fas fa-exclamation-triangle"></i> No se encontraron compras finalizadas para los filtros especificados.
+    </div>
+}
+
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    @if (ViewBag.DatosGraficoJson != null)
+    {
+        <script>
+            // 1. Obtener los datos JSON de C#
+            var dataJson = '@Html.Raw(ViewBag.DatosGraficoJson)';
+            var dataGrafico = JSON.parse(dataJson);
+
+            // 2. Preparar datos para Chart.js
+            var etiquetas = dataGrafico.map(d => d.Etiqueta);
+            var valores = dataGrafico.map(d => d.Valor);
+
+            // Colores adaptados para Compras/Gastos (Rojos/Anaranjados)
+            const colores = [
+                'rgba(255, 99, 132, 0.6)',
+                'rgba(255, 159, 64, 0.6)',
+                'rgba(255, 205, 86, 0.6)',
+                'rgba(75, 192, 192, 0.6)',
+                'rgba(153, 102, 255, 0.6)',
+                'rgba(54, 162, 235, 0.6)'
+            ];
+
+            // 3. Dibujar el Gráfico de Barras
+            const ctx = document.getElementById('graficoCompras');
+
+            new Chart(ctx, {
+                type: 'bar', // Tipo de gráfico: barras
+                data: {
+                    labels: etiquetas,
+                    datasets: [{
+                        label: 'Gasto Total ($)',
+                        data: valores,
+                        backgroundColor: colores.slice(0, etiquetas.length),
+                        borderColor: colores.slice(0, etiquetas.length).map(c => c.replace('0.6', '1')),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        title: {
+                            display: true,
+                            text: 'Total de Gasto por Proveedor Seleccionado'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Monto Total ($)'
+                            }
+                        }
+                    }
+                }
+            });
+        </script>
+    }
+}

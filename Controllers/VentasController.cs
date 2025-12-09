@@ -19,28 +19,28 @@ namespace SIJUPAY.Controllers
         // GET: Ventas/Index (Página principal/Historial)
         public async Task<IActionResult> Index()
         {
-            // Obtener todas las ventas que ya fueron FINALIZADAS.
-            var ventasFinalizadas = await _context.Venta // Asegúrate que tu modelo se llama 'Venta'
-                .Include(v => v.IdClienteNavigation)    // Incluye la información del Cliente
-                .Where(v => v.Observaciones == "FINALIZADA") // Filtra solo las ventas completadas
+            
+            var ventasFinalizadas = await _context.Venta 
+                .Include(v => v.IdClienteNavigation)    
+                .Where(v => v.Observaciones == "FINALIZADA")
                 .OrderByDescending(v => v.Fecha)
                 .ToListAsync();
 
             return View(ventasFinalizadas);
         }
 
-        // --- ACCIÓN INDEX (Historial) ---
+        
         public async Task<IActionResult> Crear()
         {
-            // 1. Obtener solo productos con stock y activos
+            
             var productos = await _context.Productos
                 .Where(p => p.Stock > 0 && p.Estado == true)
                 .ToListAsync();
 
-            // 2. Mapear los productos al VentaViewModel
+            
             var modelo = new VentaViewModel
             {
-                IdCliente = 3, // Asigna un cliente por defecto
+                IdCliente = 3, 
                 ItemsCatalogo = productos.Select(p => new VentaCatalogoItemViewModel
                 {
                     IdProducto = p.IdProducto,
@@ -48,7 +48,7 @@ namespace SIJUPAY.Controllers
                     Precio = p.Precio, 
                     Stock = p.Stock,
                     ImagenUrl = p.Foto != null
-                        ? Convert.ToBase64String(p.Foto) // Convierte byte[] a string Base64
+                        ? Convert.ToBase64String(p.Foto) 
                         : null,
                     CantidadAComprar = 0 
                 }).ToList()
@@ -61,14 +61,14 @@ namespace SIJUPAY.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RegistrarVenta(VentaViewModel model)
         {
-            // 1. Filtrar solo los ítems donde el usuario ingresó una cantidad > 0
+            
             var detallesValidos = model.ItemsCatalogo
-                .Where(d => d.CantidadAComprar > 0 && d.CantidadAComprar <= d.Stock) // Validar stock
+                .Where(d => d.CantidadAComprar > 0 && d.CantidadAComprar <= d.Stock) 
                 .ToList();
 
             if (!ModelState.IsValid || !detallesValidos.Any())
             {
-                // Si no hay ítems válidos, puedes redirigir con un mensaje de error
+                
                 TempData["Error"] = "Debe seleccionar al menos un producto con una cantidad válida que no exceda el stock.";
                 return RedirectToAction(nameof(Crear));
             }
@@ -77,7 +77,7 @@ namespace SIJUPAY.Controllers
             {
                 try
                 {
-                    // 2. Crear la Venta principal
+                    
                     var venta = new Venta
                     {
                         Fecha = DateTime.Now,
@@ -91,10 +91,10 @@ namespace SIJUPAY.Controllers
 
                     var idNuevaVenta = venta.IdVenta;
 
-                    // 3. Procesar detalles, stock y movimientos
+                    
                     foreach (var item in detallesValidos)
                     {
-                        // Crear Detalle de Venta
+                        
                         var detalle = new VentaDetalle
                         {
                             IdVenta = idNuevaVenta,
@@ -104,19 +104,19 @@ namespace SIJUPAY.Controllers
                         };
                         _context.VentaDetalles.Add(detalle);
 
-                        // Descontar Stock (Salida)
+                        
                         var productoEnDB = await _context.Productos.FindAsync(item.IdProducto);
                         productoEnDB.Stock -= item.CantidadAComprar;
                         _context.Productos.Update(productoEnDB);
 
-                        // Crear Movimiento de Inventario (Salida)
+                        
                         var movimiento = new InventarioMovimiento
                         {
                             IdProducto = item.IdProducto,
                             Cantidad = item.CantidadAComprar,
-                            TipoMovimiento = "Salida", // ¡Importante! En venta es Salida
+                            TipoMovimiento = "Salida", 
                             Fecha = DateTime.Now,
-                            IdUsuario = venta.IdCliente, // o el usuario que registra la venta
+                            IdUsuario = venta.IdCliente, 
                             Referencia = $"Venta ID {idNuevaVenta}",
                             Observaciones = "Venta Directa"
                         };
@@ -139,7 +139,7 @@ namespace SIJUPAY.Controllers
         }
 
 
-        // --- ACCIÓN AGREGAR AL CARRITO ---
+        
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AgregarAlCarritoVenta(int idProducto, int cantidad, int idCliente)
@@ -187,7 +187,7 @@ namespace SIJUPAY.Controllers
                             IdVenta = venta.IdVenta,
                             IdProducto = idProducto,
                             Cantidad = cantidad,
-                            // USAMOS PrecioVenta si existe, o Precio si usaste ese campo para ventas
+                            
                             PrecioUnitario = producto.Precio
                         };
                         _context.VentaDetalles.Add(detalle);
@@ -207,7 +207,7 @@ namespace SIJUPAY.Controllers
             return RedirectToAction(nameof(Crear));
         }
 
-        // --- ACCIÓN PAGAR CARRITO ---
+       
         public async Task<IActionResult> PagarCarrito(int idVenta)
         {
             var venta = await _context.Venta
@@ -222,7 +222,7 @@ namespace SIJUPAY.Controllers
                 return RedirectToAction(nameof(Crear));
             }
 
-            // Calculo seguro del total, usando GetValueOrDefault() para PriceUnitario
+            
             decimal totalCalculado = venta.VentaDetalles.Sum(d => d.Cantidad * d.PrecioUnitario);
 
             ViewBag.TotalVenta = totalCalculado;
@@ -231,7 +231,7 @@ namespace SIJUPAY.Controllers
             return View(venta);
         }
 
-        // --- ACCIÓN FINALIZAR VENTA (Salida de Stock) ---
+        
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> FinalizarVenta(int idVenta, string metodoDePago)
@@ -257,7 +257,7 @@ namespace SIJUPAY.Controllers
                     {
                         var producto = await _context.Productos.FindAsync(detalle.IdProducto);
 
-                        // LÓGICA CRÍTICA: DISMINUIR EL STOCK (SALIDA)
+                        
                         if (producto.Stock < detalle.Cantidad)
                         {
                             throw new InvalidOperationException($"Stock insuficiente para {producto.Nombre}. Solo quedan {producto.Stock}.");
@@ -306,7 +306,7 @@ namespace SIJUPAY.Controllers
             }
         }
 
-        // --- ACCIÓN DETALLE FACTURA ---
+       
         public async Task<IActionResult> DetalleFactura(int id)
         {
             if (id == 0) return NotFound();
@@ -325,6 +325,65 @@ namespace SIJUPAY.Controllers
             }
 
             return View(venta);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Reporte()
+        {
+            var model = new ReporteVentasViewModel
+            {
+                ListaCategorias = await _context.Categoria.Where(c => c.Estado == true).ToListAsync()
+            };
+            return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Reporte(ReporteVentasViewModel model)
+        {
+            
+            model.ListaCategorias = await _context.Categoria.Where(c => c.Estado == true).ToListAsync();
+
+            
+            DateTime fechaInicio = model.FechaInicio ?? DateTime.MinValue;
+            DateTime fechaFin = model.FechaFin?.AddDays(1) ?? DateTime.MaxValue;
+
+            
+            var query = _context.Venta
+                .Include(v => v.IdClienteNavigation)
+                .Include(v => v.VentaDetalles)
+                    .ThenInclude(vd => vd.IdProductoNavigation) 
+                .Where(v => v.Fecha >= fechaInicio &&
+                            v.Fecha < fechaFin &&
+                            v.Observaciones == "FINALIZADA")
+                .AsQueryable();
+
+            
+            if (model.IdCategoria.HasValue && model.IdCategoria.Value > 0)
+            {
+                
+                query = query.Where(v => v.VentaDetalles.Any(vd =>
+                    vd.IdProductoNavigation.IdCategoria == model.IdCategoria.Value));
+            }
+
+            
+            var ventas = await query.OrderByDescending(v => v.Fecha).ToListAsync();
+
+            var dataGrafico = ventas
+            .SelectMany(v => v.VentaDetalles) 
+            .GroupBy(vd => vd.IdProductoNavigation.IdCategoriaNavigation.Nombre) 
+            .Select(g => new GraficoDataViewModel
+            {
+                Etiqueta = g.Key, 
+                Valor = g.Sum(vd => vd.Cantidad * vd.PrecioUnitario) 
+            })
+            .OrderByDescending(d => d.Valor)
+            .ToList();
+
+            model.ResultadosVentas = ventas;
+            model.TotalVentas = ventas.Sum(v => v.Total);
+
+            ViewBag.DatosGraficoJson = Newtonsoft.Json.JsonConvert.SerializeObject(dataGrafico);
+            return View(model);
         }
     }
 }

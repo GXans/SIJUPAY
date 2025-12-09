@@ -7,23 +7,23 @@
 }
 
 <div class="container my-5">
-    <h1 class="text-success">✅ Finalizar Venta: Carrito</h1>
+    <h1 class="text-success"> Finalizar Venta: Carrito</h1>
     <p>Revisa tu orden y selecciona el método de pago antes de confirmar la venta.</p>
     <hr />
 
     <div class="row mb-4">
         <div class="col-md-6">
-            <h5>**Detalles del Cliente**</h5>
+            <h5>Detalles del Cliente</h5>
             <p class="mb-1">
-                **Nombre:** @Model.IdClienteNavigation.Nombre @Model.IdClienteNavigation.Apellido
+                Nombre: @Model.IdClienteNavigation.Nombre @Model.IdClienteNavigation.Apellido
             </p>
             <p class="mb-1">
-                **Teléfono:** @Model.IdClienteNavigation.Telefono
+                Teléfono: @Model.IdClienteNavigation.Telefono
             </p>
         </div>
     </div>
 
-    <h5>**Productos en el Carrito**</h5>
+    <h5>Productos en el Carrito</h5>
     <table class="table table-bordered table-striped mt-3">
         <thead class="bg-light">
             <tr>
@@ -46,8 +46,8 @@
         </tbody>
         <tfoot>
             <tr class="table-success">
-                <td colspan="3" class="text-end">**TOTAL A PAGAR**</td>
-                <td>**@total.ToString("C")**</td>
+                <td colspan="3" class="text-end">TOTAL A PAGAR</td>
+                <td>@total.ToString("C")</td>
             </tr>
         </tfoot>
     </table>
@@ -56,9 +56,9 @@
 
         <div class="row mb-4">
             <div class="col-md-6">
-                <label for="metodoDePago" class="form-label">**Seleccionar Método de Pago**</label>
+                <label for="metodoDePago" class="form-label">Seleccionar metodo de pago</label>
                 <select id="metodoDePago" name="metodoDePago" class="form-control" required>
-                    <option value="">-- Seleccione uno --</option>
+                    <option value="">-- Seleccione --</option>
                     <option value="Efectivo">Efectivo</option>
                     <option value="Transferencia">Transferencia Bancaria</option>
                     <option value="Credito">Tarjeta de Crédito/Débito</option>

@@ -1,97 +1,125 @@
 ﻿@model SIJUPAY.Models.ViewModels.CompraViewModel
 @using SIJUPAY.Models.ViewModels;
 
+
 @{
-    ViewData["Title"] = "Pagar Carrito de Compras";
+    ViewData["Title"] = "Finalizar Compra Pendiente";
     
-    int idCompraPendiente = ViewBag.IdCompraPendiente ?? 0;
-    int index = 0; 
+    int idCompraPendiente = 0;
+    if (ViewBag.IdCompraPendiente != null)
+    {
+        idCompraPendiente = (int)ViewBag.IdCompraPendiente;
+    }
+
+    decimal subtotal = 0;
 }
 
-<h1 class="mb-4 text-success"> Carrito de Compras</h1>
+<div class="container my-4" >
+    <h2 style="text-align:center">Carrito de compras</h2>
+    <p class="text-muted" style="text-align:center">Revise los productos a recibir y seleccione el método de pago para finalizar el proceso.</p>
+    <hr />
 
-<div class="card shadow border-success">
-    <div class="card-header bg-success text-white">
-        <h5>Ajustar Cantidades y Precios de Compra</h5>
-    </div>
-    
-    <form asp-action="FinalizarCompra" method="post">
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger" role="alert">
+            @TempData["Error"]
+        </div>
+    }
+
+    @if (!Model.Detalles.Any())
+    {
+        <div class="alert alert-info text-center">
+            El carrito de compras está vacío. Regrese al catálogo para agregar productos.
+        </div>
+        <a asp-action="Crear" class="btn btn-secondary">Volver al Catálogo</a>
+    }
+    else
+    {
+        <form asp-action="FinalizarCompra" method="post">
         @Html.AntiForgeryToken()
         
         @if (idCompraPendiente != 0)
         {
             <input type="hidden" name="idCompra" value="@idCompraPendiente" />
-        }
-        
-        <div class="card-body">
-            
-            @if (Model != null && Model.Detalles.Any())
-            {
-                <table class="table table-striped table-hover">
-                    <thead class="bg-light">
-                        <tr>
-                            <th style="width: 40%;">Producto</th>
-                            <th style="width: 25%;">Cantidad</th>
-                            <th style="width: 25%;">Precio de Compra</th>
-                            <th style="width: 10%;">Subtotal</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var item in Model.Detalles)
-                        {
-                            <tr>
-                                <td>@item.NombreProducto</td>
-                                <td>
-                                    <input type="number" name="Detalles[@index].Cantidad" 
-                                           class="form-control form-control-sm" 
-                                           value="@item.Cantidad" min="1" required />
-                                </td>
-                                <td>
-                                    <input type="number" name="Detalles[@index].PrecioCompra" 
-                                           class="form-control form-control-sm" 
-                                           value="@item.PrecioCompra.ToString("0.00")" min="0.01" step="0.01" required />
-                                </td>
-                                <td>
-                                    @item.Subtotal.ToString("C")
-                                </td>
-                            </tr>
+            <input type="hidden" asp-for="IdProveedor" />
+
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">Detalles de la compra</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th class="text-center">Cantidad</th>
+                                        <th class="text-right">Costo Unitario</th>
+                                        <th class="text-right">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model.Detalles)
+                                    {
+                                        decimal totalItem = item.Cantidad * item.PrecioCompra;
+                                        subtotal += totalItem;
+
+                                        <tr>
+                                            <td>@item.NombreProducto</td>
+                                            <td class="text-center">@item.Cantidad</td>
+                                            <td class="text-right">$@item.PrecioCompra.ToString("N2")</td>
+                                            <td class="text-right">$@totalItem.ToString("N2")</td>
+                                        </tr>
                             
                             <input type="hidden" name="Detalles[@index].IdProducto" value="@item.IdProducto" />
                             
                             { index++; }
-                        }
-                    </tbody>
-                </table>
-            }
-            else
-            {
-                <div class="alert alert-warning text-center">
-                    El carrito está vacío. <a asp-action="Crear">Regresar al Catálogo</a>.
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-            }
-        </div>
-        <div class="row mb-4">
-            <div class="col-md-6">
-                <label for="metodoDePago" class="form-label">Seleccione metodo de pago</label>
 
-                <select id="metodoDePago" name="metodoDePago" class="form-control" required>
-                    <option value="">-- Seleccione uno --</option>
-                    <option value="Efectivo">Efectivo</option>
-                    <option value="Transferencia">Transferencia Bancaria</option>
-                    <option value="Credito">Tarjeta de Crédito</option>
-                </select>
+                <div class="col-lg-4">
+                    <div class="card shadow-lg sticky-top" style="top: 20px;">
+                        <div class="card-body">
+                            <h4 class="card-title text-primary">Resumen de pago</h4>
+                            <hr />
+
+                            <div class="d-flex justify-content-between font-weight-bold h5">
+                                <span>TOTAL A PAGAR:</span>
+                                <span class="text-danger">$@subtotal.ToString("N2")</span>
+                            </div>
+
+                            <hr />
+
+                            <div class="form-group mb-4">
+                                <label for="metodoDePago" class="font-weight-bold">Método de Pago:</label>
+                                <select id="metodoDePago" name="metodoDePago" class="form-control" required>
+                                    <option value="">-- Seleccionar --</option>
+                                    <option value="Efectivo">Efectivo</option>
+                                    <option value="Transferencia">Transferencia</option>
+                                    <option value="Credito">Crédito (A plazos)</option>
+                                </select>
 
             </div>
-        </div>
+                            </div>
 
-        @if (Model != null && Model.Detalles.Any())
-        {
-            <div class="card-footer bg-light d-flex justify-content-between">
-                <a asp-action="Crear" class="btn btn-secondary">Continuar Agregando</a>
-                <button type="submit" class="btn btn-success btn-lg shadow-sm">
-                    <i class="fas fa-hand-holding-usd"></i> Finalizar y Pagar Compra
-                </button>
+                            <button type="submit" class="btn btn-danger btn-lg btn-block">
+                                <i class="fas fa-handshake"></i> FINALIZAR COMPRA
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
-        }
-    </form>
+        </form>
+    }
 </div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

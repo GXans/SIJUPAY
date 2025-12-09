@@ -1,0 +1,164 @@
+﻿@model SIJUPAY.Models.ViewModels.ReporteVentasViewModel
+@using Microsoft.AspNetCore.Mvc.Rendering
+@using SIJUPAY.Models.ViewModels
+
+@{
+    ViewData["Title"] = "Informe de Ventas Avanzado";
+}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<h1> Informe de Ventas</h1>
+
+<form asp-action="Reporte" method="post" class="mb-4 p-4 border rounded shadow-sm bg-light">
+    <div class="row">
+
+        <div class="col-md-4">
+            <div class="form-group">
+                <label asp-for="IdCategoria" class="font-weight-bold">Categoría:</label>
+                <select asp-for="IdCategoria" class="form-control"
+                        asp-items="@(new SelectList(Model.ListaCategorias, "IdCategoria", "Nombre"))">
+                    <option value="">-- Todas las Categorías --</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="form-group">
+                <label asp-for="FechaInicio" class="font-weight-bold">Fecha de Inicio:</label>
+                <input asp-for="FechaInicio" type="date" class="form-control" />
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="form-group">
+                <label asp-for="FechaFin" class="font-weight-bold">Fecha de Fin:</label>
+                <input asp-for="FechaFin" type="date" class="form-control" />
+            </div>
+        </div>
+
+        <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary btn-block">
+                <i class="fas fa-search"></i> Generar
+            </button>
+        </div>
+    </div>
+</form>
+
+@if (Model.ResultadosVentas != null && Model.ResultadosVentas.Any())
+{
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="mb-3" style="text-align:center">Resultado</h3>
+            <p class="h4 text-success" style="text-align:center">Total neto de ventas en el rango de fechas: $@Model.TotalVentas.ToString("N2")</p>
+        </div>
+    </div>
+
+    <h3 class="mt-4" style="text-align:center">Gráfico por categoría</h3>
+    <div class="card p-3 mb-5 shadow">
+        <canvas id="graficoVentas" style="max-height: 400px;"></canvas>
+    </div>
+
+    <h3 class="mt-4">Detalle de Ventas</h3>
+    <table class="table table-striped table-hover">
+        <thead class="thead-dark">
+            <tr>
+                <th>ID Venta</th>
+                <th>Fecha</th>
+                <th>Cliente</th>
+                <th>Método Pago</th>
+                <th>Total</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var venta in Model.ResultadosVentas)
+            {
+                <tr>
+                    <td>@venta.IdVenta</td>
+                    <td>@(venta.Fecha?.ToString("yyyy-MM-dd") ?? "N/A")</td>
+                    <td>@(venta.IdClienteNavigation?.Nombre ?? "N/A")</td>
+                    <td>@venta.MetodoPago</td>
+                    <td>$@venta.Total.ToString("N2")</td>
+                    <td>
+                        <a asp-action="DetalleFactura" asp-route-id="@venta.IdVenta" class="btn btn-sm btn-info">Ver Detalle</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else if (Model.FechaInicio.HasValue || Model.FechaFin.HasValue || Model.IdCategoria.HasValue)
+{
+    <div class="alert alert-warning mt-4">
+        <i class="fas fa-exclamation-triangle"></i> No se encontraron ventas finalizadas para los filtros especificados.
+    </div>
+}
+
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    @if (ViewBag.DatosGraficoJson != null)
+    {
+        <script>
+            // 1. Obtener los datos JSON de C#
+            var dataJson = '@Html.Raw(ViewBag.DatosGraficoJson)';
+            var dataGrafico = JSON.parse(dataJson);
+
+            // 2. Preparar datos para Chart.js
+            var etiquetas = dataGrafico.map(d => d.Etiqueta);
+            var valores = dataGrafico.map(d => d.Valor);
+
+            // Colores dinámicos
+            const colores = [
+                'rgba(75, 192, 192, 0.6)',
+                'rgba(255, 99, 132, 0.6)',
+                'rgba(54, 162, 235, 0.6)',
+                'rgba(255, 206, 86, 0.6)',
+                'rgba(153, 102, 255, 0.6)',
+                'rgba(255, 159, 64, 0.6)'
+            ];
+
+            // 3. Dibujar el Gráfico de Barras
+            const ctx = document.getElementById('graficoVentas');
+
+            new Chart(ctx, {
+                type: 'bar', // Tipo de gráfico: barras
+                data: {
+                    labels: etiquetas,
+                    datasets: [{
+                        label: 'Venta Total ($)',
+                        data: valores,
+                        backgroundColor: colores.slice(0, etiquetas.length), // Asigna un color a cada barra
+                        borderColor: colores.slice(0, etiquetas.length).map(c => c.replace('0.6', '1')), // Versión sólida para el borde
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false // No mostrar leyenda, la etiqueta ya está clara
+                        },
+                        title: {
+                            display: true,
+                            text: 'Total de Ventas por Categoría Seleccionada'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Monto Total ($)'
+                            }
+                        }
+                    }
+                }
+            });
+        </script>
+    }
+}
