@@ -1,0 +1,96 @@
+﻿@model Usuario
+@{
+    ViewData["Title"] = "Registro";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="~/css/login.css" rel="stylesheet" />
+    <title>Registro - SiJuPay</title>
+    <style>
+        .error-message {
+            color: #ff1744;
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="stage">
+
+        <div class="robot-wrapper float-slow">
+            <div class="bot-monitor">
+                <div class="eye"><div class="pupil"></div></div>
+                <div class="eye"><div class="pupil"></div></div>
+            </div>
+            <div class="bot-body-square"></div>
+            <div style="font-size:10px; color:#00e5ff; margin-top:5px; letter-spacing:2px;">SYS.ADMIN</div>
+        </div>
+
+        <div class="login-card" style="max-width: 550px;">
+            <div>
+                <h2>REGISTRO DE USUARIO</h2>
+                <p style="text-align:center; color:#888; margin-top:5px;">Crea tu cuenta para acceder al sistema.</p>
+            </div>
+
+            @if (ViewData["Mensaje"] != null)
+            {
+                <div class="error-message">
+                    @ViewData["Mensaje"]
+                </div>
+            }
+
+            <form asp-controller="Acceso" asp-action="Registro" method="post" style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                <input type="text" asp-for="Nombre" placeholder="Nombre" required autocomplete="given-name" style="grid-column: 1 / 2;">
+
+                <input type="text" asp-for="Apellido" placeholder="Apellido" required autocomplete="family-name" style="grid-column: 2 / 3;">
+
+                <input type="text" asp-for="Telefono" placeholder="Teléfono" required autocomplete="tel" style="grid-column: 1 / 3;">
+
+                <input type="password" asp-for="Contrasena" placeholder="Contraseña" required style="grid-column: 1 / 3;">
+
+                <button type="submit" style="grid-column: 1 / 3;">REGISTRAR CUENTA</button>
+            </form>
+
+            <div style="text-align:center; font-size:12px; color:#555;">
+                ¿Ya tienes una cuenta? <a href="/Acceso/Index" style="color:#00e5ff; text-decoration:none;">Iniciar Sesión aquí</a>
+            </div>
+        </div>
+
+        <div class="robot-wrapper float-fast">
+            <div class="bot-sphere">
+                <div class="eye"><div class="pupil"></div></div>
+                <div class="eye"><div class="pupil"></div></div>
+            </div>
+            <div class="bot-body-round"></div>
+            <div class="bot-base"></div>
+            <div style="font-size:10px; color:#ff1744; margin-top:5px; letter-spacing:2px;">NET.GUARD</div>
+        </div>
+
+    </div>
+
+    <script>
+        const pupils = document.querySelectorAll('.pupil');
+
+        document.addEventListener('mousemove', (e) => {
+            pupils.forEach(pupil => {
+                const rect = pupil.parentElement.getBoundingClientRect();
+
+                const x = e.clientX - rect.left - rect.width / 2;
+                const y = e.clientY - rect.top - rect.height / 2;
+
+                const angle = Math.atan2(y, x);
+                const distance = Math.min(8, Math.hypot(x, y) / 3.5);
+
+                pupil.style.transform = `translate(${Math.cos(angle) * distance}px, ${Math.sin(angle) * distance}px)`;
+            });
+        });
+    </script>
+</body>
+</html>

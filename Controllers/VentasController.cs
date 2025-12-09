@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SIJUPAY.Models;
 using SIJUPAY.Models.ViewModels;
@@ -6,6 +7,7 @@ using SIJUPAY.Models.ViewModels;
 
 namespace SIJUPAY.Controllers
 {
+    [Authorize]
     public class VentasController : Controller
     {
         private readonly BDSijuPayContext _context;

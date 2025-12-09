@@ -1,12 +1,14 @@
-﻿using System.Linq;
-using System.Threading.Tasks;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SIJUPAY.Models;
 using SIJUPAY.Models.ViewModels;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace SIJUPAY.Controllers
 {
+    [Authorize]
     public class ComprasController : Controller
     {
         private readonly BDSijuPayContext _context;
